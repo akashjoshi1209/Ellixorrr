@@ -1,37 +1,50 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { resetPasswordAction } from "@/actions/auth";
-import { createBrowserClient } from "@/lib/supabase/client";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
-import type { Dictionary } from "@/i18n/types";
+import { createServerClient } from "@/lib/supabase/server";
+import { ResetPasswordSession } from "./ResetPasswordSession";
 
 export default async function ResetPasswordPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) return null;
   const dict = getDictionary(locale as Locale);
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Exchange Supabase reset tokens for a session
-  const access_token = searchParams.get("access_token");
-  const refresh_token = searchParams.get("refresh_token");
+  // Server-side search parameters. Only the *presence* of recovery material
+  // is used — the token values themselves are never read into the
+  // server-rendered HTML, and are exchanged by <ResetPasswordSession /> in
+  // the browser.
+  const resolvedSearchParams = await searchParams;
+  const hasRecoveryParams =
+    typeof resolvedSearchParams.code === "string" ||
+    typeof resolvedSearchParams.token_hash === "string" ||
+    (typeof resolvedSearchParams.access_token === "string" &&
+      typeof resolvedSearchParams.refresh_token === "string");
 
-  useEffect(() => {
-    if (access_token && refresh_token) {
-      const supabase = createBrowserClient();
-      supabase.auth.setSession({ access_token, refresh_token }).then(() => {
-        window.location.href = window.location.pathname;
-      });
-    }
-  }, [access_token, refresh_token, router]);
+  // A new password can only be set once a recovery session exists. The
+  // session is established from the recovery material in the URL by
+  // <ResetPasswordSession />, because Next.js does not allow cookies to be
+  // written during a Server Component render.
+  const supabase = await createServerClient();
+  let hasRecoverySession = false;
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    hasRecoverySession = Boolean(user);
+  } catch {
+    // Reading the user can require a token refresh, and a refresh cannot
+    // persist its cookies during a Server Component render. Fall back to the
+    // recovery-link flow so the visitor can still reset their password.
+    hasRecoverySession = false;
+  }
 
   return (
     <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal min-h-svh flex flex-col justify-center py-28 md:py-40">
@@ -47,48 +60,67 @@ export default async function ResetPasswordPage({
             </p>
           </div>
 
-          <form action={resetPasswordAction} className="space-y-5" noValidate>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-              >
-                {dict.auth.password}
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="confirm_password"
-                className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-              >
-                {dict.auth.confirmPassword}
-              </label>
-              <input
-                id="confirm_password"
-                name="confirm_password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-bone px-6 py-3 text-sm font-semibold text-charcoal transition-colors duration-200 hover:bg-crimson hover:text-bone focus-visible:bg-crimson focus-visible:text-bone"
+          {!hasRecoverySession && (
+            <Suspense
+              fallback={
+                <p className="mb-6 p-4 rounded border border-bone/10 bg-charcoal/40 text-sm text-bone/60">
+                  {dict.auth.verifyingResetLink}
+                </p>
+              }
             >
-              {dict.auth.setNewPassword}
-            </button>
-          </form>
+              <ResetPasswordSession
+                hasRecoveryParams={hasRecoveryParams}
+                verifyingMessage={dict.auth.verifyingResetLink}
+                invalidMessage={dict.auth.invalidResetLink}
+                requestNewLinkLabel={dict.auth.requestNewResetLink}
+              />
+            </Suspense>
+          )}
+
+          {hasRecoverySession && (
+            <form action={resetPasswordAction} className="space-y-5" noValidate>
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
+                >
+                  {dict.auth.password}
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="confirm_password"
+                  className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
+                >
+                  {dict.auth.confirmPassword}
+                </label>
+                <input
+                  id="confirm_password"
+                  name="confirm_password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-bone px-6 py-3 text-sm font-semibold text-charcoal transition-colors duration-200 hover:bg-crimson hover:text-bone focus-visible:bg-crimson focus-visible:text-bone"
+              >
+                {dict.auth.setNewPassword}
+              </button>
+            </form>
+          )}
 
           <p className="mt-8 text-center text-sm text-bone/60">
             {dict.auth.haveAccount}{" "}

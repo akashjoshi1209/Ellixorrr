@@ -208,6 +208,10 @@ const en = {
     resetPassword: "Reset password",
     sendResetLink: "Send reset link",
     setNewPassword: "Set new password",
+    verifyingResetLink: "Verifying your recovery link…",
+    invalidResetLink:
+      "This password reset link is invalid or has expired. Please request a new one.",
+    requestNewResetLink: "Request a new reset link",
     noAccount: "Don't have an account?",
     haveAccount: "Already have an account?",
     loginSuccess: "Welcome back!",

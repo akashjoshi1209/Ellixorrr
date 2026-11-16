@@ -190,7 +190,7 @@ export default async function CustomerProjectDetailPage({
                       {u.description || "No description."}
                     </p>
                     <p className="mt-1 text-xs text-bone/40">
-                      {u.project_name} · {new Date(
+                      {projectRow.project_name} · {new Date(
                         u.created_at
                       ).toLocaleDateString(undefined, {
                         month: "short",

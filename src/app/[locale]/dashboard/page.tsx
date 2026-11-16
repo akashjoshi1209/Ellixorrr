@@ -224,9 +224,6 @@ export default async function CustomerDashboardPage({
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="text-sm text-bone/60">{dict.auth.noUpdates}</p>
-            )}
             </div>
           </Reveal>
         ) : (

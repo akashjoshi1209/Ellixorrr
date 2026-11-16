@@ -207,6 +207,10 @@ const hi: Dictionary = {
     resetPassword: "पासवर्ड रीसेट करें",
     sendResetLink: "रिसेट लिंक भेजें",
     setNewPassword: "नया पासवर्ड सेट करें",
+    verifyingResetLink: "आपका रिकवरी लिंक जाँचा जा रहा है…",
+    invalidResetLink:
+      "यह पासवर्ड रीसेट लिंक अमान्य या समाप्त हो चुका है। कृपया नया लिंक मांगें।",
+    requestNewResetLink: "नया रीसेट लिंक मांगें",
     noAccount: "खाता नहीं है?",
     haveAccount: "पहले से खाता है?",
     loginSuccess: "वापस स्वागत है!",
