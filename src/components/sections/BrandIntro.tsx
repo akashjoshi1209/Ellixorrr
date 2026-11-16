@@ -1,0 +1,30 @@
+import { Reveal } from "@/components/motion/Reveal";
+import { EyebrowRule, SectionShell } from "@/components/sections/SectionShell";
+import type { Dictionary } from "@/i18n/types";
+
+type BrandIntroProps = {
+  dict: Dictionary;
+};
+
+/** Brand introduction on the forest surface — what Ellixorrr does and why. */
+export function BrandIntro({ dict }: BrandIntroProps) {
+  return (
+    <SectionShell id="about" index="01" surface="forest" aria-label={dict.intro.eyebrow}>
+      <div className="grid gap-12 md:grid-cols-12 md:gap-8">
+        <div className="md:col-span-7">
+          <Reveal>
+            <EyebrowRule eyebrow={dict.intro.eyebrow} />
+            <h2 className="display-lg mt-6 max-w-3xl">{dict.intro.title}</h2>
+          </Reveal>
+        </div>
+        <div className="md:col-span-5 md:pt-2">
+          {dict.intro.paragraphs.map((paragraph, index) => (
+            <Reveal key={index} delay={0.08 * (index + 1)}>
+              <p className="mb-6 text-base leading-relaxed text-bone/70">{paragraph}</p>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </SectionShell>
+  );
+}

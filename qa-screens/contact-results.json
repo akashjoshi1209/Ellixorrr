@@ -1,0 +1,322 @@
+[
+  {
+    "check": "en: contact section present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: WhatsApp link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: WhatsApp correct number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: WhatsApp prefilled message",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: WhatsApp opens new tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Email link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Email correct recipient",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Email subject present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Phone link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Phone correct number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Name field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Email field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Phone field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Business field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Service select present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Description textarea present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Submit button present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Form shows validation errors on empty submit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: No console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: Header CTA links to contact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: contact section present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: WhatsApp link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: WhatsApp correct number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: WhatsApp prefilled message",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: WhatsApp opens new tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Email link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Email correct recipient",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Email subject present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Phone link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Phone correct number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Name field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Email field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Phone field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Business field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Service select present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Description textarea present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Submit button present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Form shows validation errors on empty submit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: No console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: Header CTA links to contact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: contact section present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: WhatsApp link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: WhatsApp correct number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: WhatsApp prefilled message",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: WhatsApp opens new tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Email link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Email correct recipient",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Email subject present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Phone link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Phone correct number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Name field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Email field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Phone field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Business field present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Service select present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Description textarea present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Submit button present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Form shows validation errors on empty submit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: No console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: Header CTA links to contact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile: WhatsApp link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile: Email link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile: Phone link present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile: Form fields present",
+    "ok": true,
+    "detail": ""
+  }
+]

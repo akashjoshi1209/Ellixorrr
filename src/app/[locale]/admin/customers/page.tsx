@@ -1,0 +1,132 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { createServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { Reveal } from "@/components/motion/Reveal";
+import { EyebrowRule } from "@/components/sections/SectionShell";
+import { adminListCustomers } from "@/actions/admin";
+import type { Dictionary } from "@/i18n/types";
+
+export const dynamic = "force-dynamic";
+
+type CustomerRow = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  role: string;
+  created_at: string;
+};
+
+export default async function AdminCustomersPage({
+  params,
+  dict,
+}: {
+  params: Promise<{ locale: string }>;
+  dict: Dictionary;
+}) {
+  const { locale } = await params;
+  const cookieStore = await cookies();
+  const supabase = await createServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect(`/${locale}/auth/login?redirectTo=/${locale}/admin/customers`);
+  }
+
+  const result = await adminListCustomers();
+  if ("error" in result) {
+    notFound();
+  }
+  const customers = (result.customers ?? []) as CustomerRow[];
+
+  return (
+    <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
+      <div className="relative mx-auto max-w-7xl px-gutter">
+        <Reveal>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="h-2 w-2 rounded-full bg-forest" aria-hidden="true" />
+                <h2 className="display-lg">Customer management</h2>
+              </div>
+              <p className="text-sm leading-relaxed text-bone/70">
+                View and manage all customer accounts.
+              </p>
+            </div>
+            <Link
+              href={`/${locale}/admin`}
+              className="inline-flex items-center gap-2 rounded-full bg-bone px-5 py-2.5 text-sm font-semibold text-charcoal transition-colors hover:bg-crimson hover:text-bone"
+            >
+              Back to admin
+              <span className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.1}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-bone/10">
+                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
+                    Name
+                  </th>
+                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
+                    Email
+                  </th>
+                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
+                    Role
+                  </th>
+                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
+                    Joined
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((customer: CustomerRow) => (
+                  <tr
+                    key={customer.id}
+                    className="border-b border-bone/10 hover:bg-charcoal/20 transition-colors"
+                  >
+                    <td className="py-4">
+                      <div className="font-medium text-bone">
+                        {customer.full_name || "Unnamed"}
+                      </div>
+                    </td>
+                    <td className="py-4 text-bone/70">
+                      {customer.email}
+                    </td>
+                    <td className="py-4">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[0.65rem] font-semibold tracking-wider ${
+                          customer.role === "admin"
+                            ? "text-crimson/60 bg-crimson/10 border border-crimson/20"
+                            : "text-forest bg-forest/10 border border-forest/20"
+                        }`}
+                      >
+                        {customer.role}
+                      </span>
+                    </td>
+                    <td className="py-4 text-bone/40 text-xs">
+                      {new Date(customer.created_at).toLocaleDateString(
+                        undefined,
+                        { month: "short", day: "numeric", year: "numeric" }
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {customers.length === 0 && (
+            <div className="py-8 text-center text-bone/60">
+              No customers found.
+            </div>
+          )}
+        </Reveal>
+      </div>
+    </section>
+  );
+}

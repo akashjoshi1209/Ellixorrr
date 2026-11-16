@@ -1,0 +1,44 @@
+/**
+ * Supabase server client.
+ *
+ * Used in Server Components, Route Handlers, and Server Actions.
+ * Reads/writes auth cookies via @supabase/ssr's createServerClient.
+ *
+ * The service role key is NEVER passed to this client — it is server-only
+ * and is reserved for trusted administrative operations that bypass RLS
+ * (if ever needed). All application reads/writes go through the anon key
+ * and are enforced by Row Level Security.
+ *
+ * Authorization is performed independently in each server-side handler
+ * by inspecting the authenticated user's claims and role, never by trusting
+ * client-provided role values.
+ */
+import {
+  createServerClient as createSupabaseServerClient,
+  type CookieOptions,
+} from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import type { Database } from "./types";
+
+export async function createServerClient(): Promise<SupabaseClient<Database>> {
+  const cookieStore = await cookies();
+
+  return createSupabaseServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.set(name, "", options);
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set(name, value, options);
+        },
+      },
+    }
+  );
+}

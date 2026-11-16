@@ -1,0 +1,122 @@
+[
+  {
+    "check": "root redirects to a locale route",
+    "ok": true,
+    "detail": "http://localhost:3000/en"
+  },
+  {
+    "check": "html lang=en",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hero headline present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "anchor #services target exists",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "anchor #about target exists",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "anchor #work target exists",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "anchor #contact target exists",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "header CTA exists",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "language switcher has 3 locales",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "anchor navigation scrolls",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "/hi renders (True, headline True)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "/mr renders (True, headline True)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "language switcher navigates to /mr",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "cookie persisted",
+    "ok": true,
+    "detail": "mr"
+  },
+  {
+    "check": "cookie redirects root to /mr",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "unknown path returns 404",
+    "ok": true,
+    "detail": "status=404"
+  },
+  {
+    "check": "404 keeps locale layout",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile: desktop nav hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile drawer opens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile drawer focus moves in",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mobile drawer Escape closes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "reduced motion: hero content visible immediately",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "reduced motion: below-fold content visible without scrolling animations",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "no console errors across pages",
+    "ok": true,
+    "detail": ""
+  }
+]
