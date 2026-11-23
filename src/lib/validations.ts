@@ -95,35 +95,85 @@ export const enquirySchema = z.object({
 
 export type EnquiryInput = z.infer<typeof enquirySchema>;
 
+/**
+ * Profile fields editable by the account holder.
+ *
+ * `business_name` is deliberately absent: the `profiles` table has no such
+ * column (it only exists on `enquiries`), and writing it would fail.
+ */
 export const profileSchema = z.object({
-  full_name: NAME.optional(),
-  email: EMAIL.optional(),
+  full_name: NAME.optional().or(z.literal("")),
+  email: EMAIL.optional().or(z.literal("")),
   phone: PHONE,
-  business_name: BUSINESS_NAME,
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;
+
+const PROJECT_STATUS = z.enum({
+  enquiry: "enquiry",
+  planning: "planning",
+  in_progress: "in_progress",
+  review: "review",
+  completed: "completed",
+  on_hold: "on_hold",
+});
+
+const ENQUIRY_STATUS = z.enum({
+  new: "new",
+  reviewing: "reviewing",
+  contacted: "contacted",
+  converted: "converted",
+  closed: "closed",
+});
 
 export const projectSchema = z.object({
   customer_id: z.string().uuid("Invalid customer ID."),
   project_name: NAME,
   service_type: SERVICE_TYPE,
-  description: DESCRIPTION.optional(),
-  status: z
-    .enum({
-      enquiry: "enquiry",
-      planning: "planning",
-      in_progress: "in_progress",
-      review: "review",
-      completed: "completed",
-      on_hold: "on_hold",
-    })
-    .optional(),
+  description: DESCRIPTION.optional().or(z.literal("")),
+  status: PROJECT_STATUS.optional(),
   start_date: z.string().datetime().optional().or(z.literal("")),
   expected_completion_date: z.string().datetime().optional().or(z.literal("")),
 });
 
 export type ProjectInput = z.infer<typeof projectSchema>;
+
+/** Payload accepted by the admin "create project" action. */
+export const adminCreateProjectSchema = z.object({
+  customer_id: z.string().uuid("Invalid customer ID."),
+  project_name: NAME,
+  service_type: SERVICE_TYPE,
+  description: DESCRIPTION.optional().or(z.literal("")),
+  status: PROJECT_STATUS.optional(),
+});
+
+export type AdminCreateProjectInput = z.infer<typeof adminCreateProjectSchema>;
+
+/** Payload accepted by the admin "update project" action. */
+export const adminUpdateProjectSchema = z.object({
+  project_id: z.string().uuid("Invalid project ID."),
+  project_name: NAME,
+  service_type: SERVICE_TYPE,
+  description: DESCRIPTION.optional().or(z.literal("")),
+  status: PROJECT_STATUS,
+});
+
+export type AdminUpdateProjectInput = z.infer<typeof adminUpdateProjectSchema>;
+
+/** Payload accepted by the admin "delete project" action. */
+export const adminDeleteProjectSchema = z.object({
+  project_id: z.string().uuid("Invalid project ID."),
+});
+
+export type AdminDeleteProjectInput = z.infer<typeof adminDeleteProjectSchema>;
+
+/** Payload accepted by the admin "update enquiry status" action. */
+export const adminEnquiryStatusSchema = z.object({
+  enquiry_id: z.string().uuid("Invalid enquiry ID."),
+  status: ENQUIRY_STATUS,
+});
+
+export type AdminEnquiryStatusInput = z.infer<typeof adminEnquiryStatusSchema>;
 
 export const projectUpdateSchema = z.object({
   title: NAME,

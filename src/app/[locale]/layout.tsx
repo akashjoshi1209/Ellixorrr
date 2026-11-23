@@ -59,7 +59,9 @@ export default async function LocaleLayout({
     <html lang={locale} dir="ltr" className="h-full">
       <body className="flex min-h-full flex-col">
         {/* Structured data — only facts defined by the brief; no invented
-            address, phone, rating or awards until real ones exist. */}
+            address, phone, rating or awards until real ones exist.
+            The payload is escaped so a `<` in any value can never close
+            the script element early. */}
         <script
           type="application/ld+json"
           suppressHydrationWarning
@@ -74,7 +76,10 @@ export default async function LocaleLayout({
               email: "ellixorrr@gmail.com",
               telephone: "+919404044607",
               url: `https://ellixorrr.com/${locale}`,
-            }),
+            })
+              .replace(/&/g, "\\u0026")
+              .replace(/</g, "\\u003c")
+              .replace(/>/g, "\\u003e"),
           }}
         />
         <a

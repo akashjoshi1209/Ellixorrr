@@ -6,6 +6,8 @@ import { Reveal } from "@/components/motion/Reveal";
 import { EyebrowRule } from "@/components/sections/SectionShell";
 import { submitEnquiryAction } from "@/actions/auth";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
+import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/types";
 
 const WHATSAPP_NUMBER = "919404044607";
@@ -14,12 +16,14 @@ const PHONE_NUMBER = "+919404044607";
 
 type ContactCTAProps = {
   dict: Dictionary;
+  locale: Locale;
 };
 
 const SERVICES = ["Websites", "Applications", "Automations", "Custom Solutions"];
 
-export function ContactCTA({ dict }: ContactCTAProps) {
+export function ContactCTA({ dict, locale }: ContactCTAProps) {
   const searchParams = useSearchParams();
+  // Only allowlisted codes are rendered — the raw query value is never shown.
   const error = searchParams.get("error") || undefined;
   const message = searchParams.get("message") || undefined;
 
@@ -76,17 +80,9 @@ export function ContactCTA({ dict }: ContactCTAProps) {
         <Reveal delay={0.2}>
           <div className="mt-14 max-w-2xl">
             <h3 className="display-md mb-6">{dict.contact.form.title}</h3>
-            {error && (
-              <p className="mb-6 text-sm text-crimson/70 bg-crimson/10 border border-crimson/20 rounded-md p-4">
-                {error}
-              </p>
-            )}
-            {message === "submitted" && (
-              <p className="mb-6 text-sm text-bone/70 bg-bone/5 border border-bone/10 rounded-md p-4">
-                Thank you — your enquiry has been received.
-              </p>
-            )}
+            <FeedbackBanner dict={dict} error={error} success={message} />
             <form action={submitEnquiryAction} noValidate>
+              <input type="hidden" name="locale" value={locale} />
               <div className="space-y-5">
                 <div>
                   <label

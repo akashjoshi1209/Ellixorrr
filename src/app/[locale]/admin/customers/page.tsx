@@ -1,45 +1,25 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { Reveal } from "@/components/motion/Reveal";
-import { EyebrowRule } from "@/components/sections/SectionShell";
-import { adminListCustomers } from "@/actions/admin";
-import type { Dictionary } from "@/i18n/types";
+import { adminListCustomers } from "@/lib/admin-data";
+import { requireAdmin } from "@/lib/profiles";
+import { isLocale, type Locale } from "@/i18n/config";
 
 export const dynamic = "force-dynamic";
 
-type CustomerRow = {
-  id: string;
-  full_name: string | null;
-  email: string;
-  role: string;
-  created_at: string;
-};
-
 export default async function AdminCustomersPage({
   params,
-  dict,
 }: {
   params: Promise<{ locale: string }>;
-  dict: Dictionary;
 }) {
   const { locale } = await params;
-  const cookieStore = await cookies();
-  const supabase = await createServerClient();
+  if (!isLocale(locale)) return null;
+  const resolvedLocale = locale as Locale;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/admin/customers`);
-  }
+  // Server-side authorization: only admins may access admin routes.
+  await requireAdmin(resolvedLocale);
 
   const result = await adminListCustomers();
-  if ("error" in result) {
-    notFound();
-  }
-  const customers = (result.customers ?? []) as CustomerRow[];
+  const customers = result.data;
 
   return (
     <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
@@ -85,38 +65,46 @@ export default async function AdminCustomersPage({
                 </tr>
               </thead>
               <tbody>
-                {customers.map((customer: CustomerRow) => (
-                  <tr
-                    key={customer.id}
-                    className="border-b border-bone/10 hover:bg-charcoal/20 transition-colors"
-                  >
-                    <td className="py-4">
-                      <div className="font-medium text-bone">
-                        {customer.full_name || "Unnamed"}
-                      </div>
-                    </td>
-                    <td className="py-4 text-bone/70">
-                      {customer.email}
-                    </td>
-                    <td className="py-4">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[0.65rem] font-semibold tracking-wider ${
-                          customer.role === "admin"
-                            ? "text-crimson/60 bg-crimson/10 border border-crimson/20"
-                            : "text-forest bg-forest/10 border border-forest/20"
-                        }`}
-                      >
-                        {customer.role}
-                      </span>
-                    </td>
-                    <td className="py-4 text-bone/40 text-xs">
-                      {new Date(customer.created_at).toLocaleDateString(
-                        undefined,
-                        { month: "short", day: "numeric", year: "numeric" }
-                      )}
+                {customers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-bone/40">
+                      No customers found.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  customers.map((customer) => (
+                    <tr
+                      key={customer.id}
+                      className="border-b border-bone/10 hover:bg-charcoal/20 transition-colors"
+                    >
+                      <td className="py-4">
+                        <div className="font-medium text-bone">
+                          {customer.full_name || "Unnamed"}
+                        </div>
+                      </td>
+                      <td className="py-4 text-bone/70">
+                        {customer.email ?? "—"}
+                      </td>
+                      <td className="py-4">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[0.65rem] font-semibold tracking-wider ${
+                            customer.role === "admin"
+                              ? "text-crimson/60 bg-crimson/10 border border-crimson/20"
+                              : "text-forest bg-forest/10 border border-forest/20"
+                          }`}
+                        >
+                          {customer.role}
+                        </span>
+                      </td>
+                      <td className="py-4 text-bone/40 text-xs">
+                        {new Date(customer.created_at).toLocaleDateString(
+                          undefined,
+                          { month: "short", day: "numeric", year: "numeric" }
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

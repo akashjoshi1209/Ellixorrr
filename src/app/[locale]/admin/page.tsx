@@ -1,41 +1,28 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { Reveal } from "@/components/motion/Reveal";
-import { EyebrowRule } from "@/components/sections/SectionShell";
-import { adminListCustomers, adminListProjects, adminListEnquiries } from "@/actions/admin";
-import type { Dictionary } from "@/i18n/types";
+import {
+  adminListCustomers,
+  adminListEnquiries,
+  adminListProjects,
+} from "@/lib/admin-data";
+import { requireAdmin } from "@/lib/profiles";
+import { getDictionary } from "@/i18n/dictionaries";
+import { isLocale, type Locale } from "@/i18n/config";
 
 export const dynamic = "force-dynamic";
 
-type ProjectRow = {
-  status: string;
-};
-
 export default async function AdminDashboardPage({
   params,
-  dict,
 }: {
   params: Promise<{ locale: string }>;
-  dict: Dictionary;
 }) {
   const { locale } = await params;
-  const cookieStore = await cookies();
-  const supabase = await createServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/admin`);
-  }
+  if (!isLocale(locale)) return null;
+  const dict = getDictionary(locale as Locale);
+  const resolvedLocale = locale as Locale;
 
   // Server-side authorization: only admins may access admin routes.
-  const adminResult = await adminListCustomers();
-  if ("error" in adminResult) {
-    redirect(`/${locale}/dashboard`);
-  }
+  await requireAdmin(resolvedLocale);
 
   const [customersResult, projectsResult, enquiriesResult] = await Promise.all([
     adminListCustomers(),
@@ -43,14 +30,9 @@ export default async function AdminDashboardPage({
     adminListEnquiries(),
   ]);
 
-  const customers =
-    "customers" in customersResult
-      ? (customersResult.customers ?? [])
-      : [];
-  const projects =
-    "projects" in projectsResult ? (projectsResult.projects ?? []) : [];
-  const enquiries =
-    "enquiries" in enquiriesResult ? (enquiriesResult.enquiries ?? []) : [];
+  const customers = customersResult.data;
+  const projects = projectsResult.data;
+  const enquiries = enquiriesResult.data;
 
   const totalCustomers = customers.length;
   const totalProjects = projects.length;

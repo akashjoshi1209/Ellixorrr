@@ -85,9 +85,19 @@
     "detail": ""
   },
   {
-    "check": "en: Form shows validation errors on empty submit",
+    "check": "en: Empty submit is rejected server-side",
     "ok": true,
-    "detail": ""
+    "detail": "http://localhost:3000/en?error=validation_failed#contact"
+  },
+  {
+    "check": "en: Empty submit stays on the homepage contact section",
+    "ok": true,
+    "detail": "http://localhost:3000/en?error=validation_failed#contact"
+  },
+  {
+    "check": "en: Form shows a localized validation error banner",
+    "ok": true,
+    "detail": "alerts=1"
   },
   {
     "check": "en: No console errors",
@@ -185,9 +195,19 @@
     "detail": ""
   },
   {
-    "check": "hi: Form shows validation errors on empty submit",
+    "check": "hi: Empty submit is rejected server-side",
     "ok": true,
-    "detail": ""
+    "detail": "http://localhost:3000/hi?error=validation_failed#contact"
+  },
+  {
+    "check": "hi: Empty submit stays on the homepage contact section",
+    "ok": true,
+    "detail": "http://localhost:3000/hi?error=validation_failed#contact"
+  },
+  {
+    "check": "hi: Form shows a localized validation error banner",
+    "ok": true,
+    "detail": "alerts=1"
   },
   {
     "check": "hi: No console errors",
@@ -285,9 +305,19 @@
     "detail": ""
   },
   {
-    "check": "mr: Form shows validation errors on empty submit",
+    "check": "mr: Empty submit is rejected server-side",
     "ok": true,
-    "detail": ""
+    "detail": "http://localhost:3000/mr?error=validation_failed#contact"
+  },
+  {
+    "check": "mr: Empty submit stays on the homepage contact section",
+    "ok": true,
+    "detail": "http://localhost:3000/mr?error=validation_failed#contact"
+  },
+  {
+    "check": "mr: Form shows a localized validation error banner",
+    "ok": true,
+    "detail": "alerts=1"
   },
   {
     "check": "mr: No console errors",

@@ -1,142 +1,245 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import type { Locale } from "@/i18n/config";
+import { createServerClient } from "@/lib/supabase/server";
 import {
-  loginSchema,
-  registerSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
+  feedbackPath,
+  mapAuthError,
+  type ErrorCode,
+} from "@/lib/feedback";
+import {
+  localizedPath,
+  resolveLocale,
+  safeRedirectPath,
+} from "@/lib/navigation";
+import { getCurrentProfile } from "@/lib/profiles";
+import {
   enquirySchema,
+  forgotPasswordSchema,
+  loginSchema,
+  profileSchema,
+  registerSchema,
+  resetPasswordSchema,
 } from "@/lib/validations";
+
+/** ------------------------------------------------------------------------
+ *  Helpers
+ *
+ *  These are module-private: every export of a `"use server"` module is a
+ *  publicly reachable Server Action, so only the mutations below may be
+ *  exported.
+ * ----------------------------------------------------------------------- */
+
+/** Reads a form field as a plain string (never a File). */
+function readString(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
+
+/** Reads the locale that the page submitted with the form. */
+function readLocale(formData: FormData): Locale {
+  return resolveLocale(readString(formData, "locale"));
+}
+
+/**
+ * Maps a Zod failure onto an allowlisted error code. A confirmation-field
+ * mismatch gets its own code; everything else is a generic validation
+ * failure. The raw validation messages are never exposed.
+ */
+function validationErrorCode(
+  issues: readonly { path: PropertyKey[] }[],
+  mismatchCode: ErrorCode
+): ErrorCode {
+  const mismatch = issues.some((issue) => issue.path[0] === "confirm_password");
+  return mismatch ? mismatchCode : "validation_failed";
+}
 
 /** ------------------------------------------------------------------------
  *  Authentication server actions
  * ----------------------------------------------------------------------- */
 
 export async function loginAction(formData: FormData) {
-  "use server";
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+  const locale = readLocale(formData);
+  const email = readString(formData, "email");
+  const password = readString(formData, "password");
+  const redirectTo = readString(formData, "redirectTo");
 
   const validated = loginSchema.safeParse({ email, password });
   if (!validated.success) {
-    redirect("/auth/login?error=Invalid email or password.");
+    redirect(
+      feedbackPath(locale, "/auth/login", { error: "invalid_credentials" })
+    );
   }
 
   const supabase = await createServerClient();
 
   const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+    email: validated.data.email,
+    password: validated.data.password,
   });
 
   if (error) {
-    redirect(`/auth/login?error=${encodeURIComponent("Invalid email or password.")}`);
+    // The raw Supabase message is never echoed back: it can reveal whether
+    // an account exists for a given address.
+    redirect(
+      feedbackPath(locale, "/auth/login", { error: "invalid_credentials" })
+    );
   }
 
-  redirect("/dashboard");
+  // Honour the (validated) destination the visitor came from.
+  const safeTarget = safeRedirectPath(redirectTo);
+  if (safeTarget) redirect(safeTarget);
+
+  // Otherwise route by role.
+  const profile = await getCurrentProfile();
+  if (profile?.role === "admin") {
+    redirect(localizedPath(locale, "/admin"));
+  }
+  redirect(localizedPath(locale, "/dashboard"));
 }
 
 export async function registerAction(formData: FormData) {
-  "use server";
-  const full_name = formData.get("full_name") as string;
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const confirm_password = formData.get("confirm_password") as string;
+  const locale = readLocale(formData);
 
-  const validated = registerSchema.safeParse({ full_name, email, password, confirm_password });
+  const validated = registerSchema.safeParse({
+    full_name: readString(formData, "full_name"),
+    email: readString(formData, "email"),
+    password: readString(formData, "password"),
+    confirm_password: readString(formData, "confirm_password"),
+  });
   if (!validated.success) {
-    redirect("/auth/register?error=Invalid registration data.");
+    redirect(
+      feedbackPath(locale, "/auth/register", {
+        error: validationErrorCode(
+          validated.error.issues,
+          "passwords_dont_match"
+        ),
+      })
+    );
   }
 
   const supabase = await createServerClient();
 
   const { error } = await supabase.auth.signUp({
-    email,
-    password,
+    email: validated.data.email,
+    password: validated.data.password,
     options: {
-      data: { full_name },
+      data: { full_name: validated.data.full_name },
     },
   });
 
   if (error) {
-    redirect(`/auth/register?error=${encodeURIComponent(error.message)}`);
+    redirect(
+      feedbackPath(locale, "/auth/register", { error: mapAuthError(error) })
+    );
   }
 
-  redirect("/auth/login?message=registered");
+  redirect(feedbackPath(locale, "/auth/login", { success: "registered" }));
 }
 
-export async function logoutAction() {
-  "use server";
-  const supabase = await createServerClient();
+export async function logoutAction(input?: string | FormData) {
+  const locale = resolveLocale(
+    typeof input === "string" ? input : input?.get("locale")
+  );
 
+  const supabase = await createServerClient();
   await supabase.auth.signOut();
-  redirect("/");
+
+  redirect(localizedPath(locale, "/"));
 }
 
 export async function forgotPasswordAction(formData: FormData) {
-  "use server";
-  const email = formData.get("email") as string;
+  const locale = readLocale(formData);
 
-  const validated = forgotPasswordSchema.safeParse({ email });
+  const validated = forgotPasswordSchema.safeParse({
+    email: readString(formData, "email"),
+  });
   if (!validated.success) {
-    redirect("/auth/forgot-password?error=Invalid email address.");
+    redirect(
+      feedbackPath(locale, "/auth/forgot-password", { error: "invalid_email" })
+    );
   }
 
   const supabase = await createServerClient();
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/reset-password`,
-  });
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    validated.data.email,
+    {
+      // NOTE: this still points at the Supabase project host. Correcting it
+      // requires a Site URL / Redirect URL change in the Supabase dashboard,
+      // which is outside the scope of the application-only remediation.
+      redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/reset-password`,
+    }
+  );
 
   if (error) {
-    redirect(`/auth/forgot-password?error=${encodeURIComponent(error.message)}`);
+    redirect(
+      feedbackPath(locale, "/auth/forgot-password", {
+        error: mapAuthError(error),
+      })
+    );
   }
 
-  redirect("/auth/login?message=reset-link-sent");
+  redirect(
+    feedbackPath(locale, "/auth/login", { success: "reset_link_sent" })
+  );
 }
 
 export async function resetPasswordAction(formData: FormData) {
-  "use server";
-  const password = formData.get("password") as string;
-  const confirm_password = formData.get("confirm_password") as string;
+  const locale = readLocale(formData);
 
-  const validated = resetPasswordSchema.safeParse({ password, confirm_password });
+  const validated = resetPasswordSchema.safeParse({
+    password: readString(formData, "password"),
+    confirm_password: readString(formData, "confirm_password"),
+  });
   if (!validated.success) {
-    redirect("/auth/reset-password?error=Invalid reset data.");
+    redirect(
+      feedbackPath(locale, "/auth/reset-password", {
+        error: validationErrorCode(
+          validated.error.issues,
+          "passwords_dont_match"
+        ),
+      })
+    );
   }
 
   const supabase = await createServerClient();
 
-  const { error } = await supabase.auth.updateUser({ password });
+  const { error } = await supabase.auth.updateUser({
+    password: validated.data.password,
+  });
 
   if (error) {
-    redirect(`/auth/reset-password?error=${encodeURIComponent(error.message)}`);
+    redirect(
+      feedbackPath(locale, "/auth/reset-password", { error: mapAuthError(error) })
+    );
   }
 
-  redirect("/auth/login?message=password-reset");
+  redirect(
+    feedbackPath(locale, "/auth/login", { success: "password_reset" })
+  );
 }
 
+/** ------------------------------------------------------------------------
+ *  Public enquiry (homepage contact form)
+ * ----------------------------------------------------------------------- */
+
 export async function submitEnquiryAction(formData: FormData) {
-  "use server";
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  const business_name = formData.get("business_name") as string;
-  const service_type = formData.get("service_type") as string;
-  const project_description = formData.get("project_description") as string;
+  const locale = readLocale(formData);
 
   const validated = enquirySchema.safeParse({
-    name,
-    email,
-    phone,
-    business_name,
-    service_type,
-    project_description,
+    name: readString(formData, "name"),
+    email: readString(formData, "email"),
+    phone: readString(formData, "phone"),
+    business_name: readString(formData, "business_name"),
+    service_type: readString(formData, "service_type"),
+    project_description: readString(formData, "project_description"),
   });
   if (!validated.success) {
-    redirect("/contact?error=Invalid enquiry data.");
+    redirect(
+      feedbackPath(locale, "/", { error: "validation_failed" }, "contact")
+    );
   }
 
   const supabase = await createServerClient();
@@ -145,51 +248,45 @@ export async function submitEnquiryAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Supabase client types don't match our custom Database type; using any here.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("enquiries").insert({
+  const { error } = await supabase.from("enquiries").insert({
     customer_id: user?.id ?? null,
-    name,
-    email,
-    phone: phone || null,
-    business_name: business_name || null,
-    service_type,
-    project_description,
+    name: validated.data.name,
+    email: validated.data.email,
+    phone: validated.data.phone || null,
+    business_name: validated.data.business_name || null,
+    service_type: validated.data.service_type,
+    project_description: validated.data.project_description,
     status: "new",
   });
 
   if (error) {
-    redirect(`/contact?error=${encodeURIComponent(error.message)}`);
+    redirect(
+      feedbackPath(locale, "/", { error: "enquiry_failed" }, "contact")
+    );
   }
 
-  redirect("/contact?message=submitted");
+  redirect(
+    feedbackPath(locale, "/", { success: "enquiry_submitted" }, "contact")
+  );
 }
 
-export async function getCurrentProfile(): Promise<{ profile: { id: string; email: string; role: string; full_name: string | null } | null; error: string | null }> {
-  "use server";
-  const supabase = await createServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { profile: null, error: "Not authenticated" };
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error) return { profile: null, error: error.message };
-  return { profile: data, error: null };
-}
+/** ------------------------------------------------------------------------
+ *  Customer profile
+ * ----------------------------------------------------------------------- */
 
 export async function updateProfileAction(formData: FormData) {
-  "use server";
-  const full_name = formData.get("full_name") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  const business_name = formData.get("business_name") as string;
+  const locale = readLocale(formData);
+
+  const validated = profileSchema.safeParse({
+    full_name: readString(formData, "full_name"),
+    email: readString(formData, "email"),
+    phone: readString(formData, "phone"),
+  });
+  if (!validated.success) {
+    redirect(
+      feedbackPath(locale, "/dashboard/profile", { error: "validation_failed" })
+    );
+  }
 
   const supabase = await createServerClient();
 
@@ -197,24 +294,32 @@ export async function updateProfileAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/auth/login?redirectTo=/dashboard/profile");
+    redirect(
+      `${localizedPath(locale, "/auth/login")}?redirectTo=${encodeURIComponent(
+        localizedPath(locale, "/dashboard/profile")
+      )}`
+    );
   }
 
-  // Supabase client types don't match our custom Database type; using any here.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  // `role` is intentionally absent: a customer can never promote themselves.
+  const { error } = await supabase
     .from("profiles")
     .update({
-      full_name: full_name || undefined,
-      email: email || undefined,
-      phone: phone || undefined,
-      business_name: business_name || undefined,
+      full_name: validated.data.full_name || null,
+      email: validated.data.email || null,
+      phone: validated.data.phone || null,
     })
     .eq("id", user.id);
 
   if (error) {
-    redirect(`/dashboard/profile?error=${encodeURIComponent(error.message)}`);
+    redirect(
+      feedbackPath(locale, "/dashboard/profile", {
+        error: "profile_update_failed",
+      })
+    );
   }
 
-  redirect("/dashboard/profile?message=updated");
+  redirect(
+    feedbackPath(locale, "/dashboard/profile", { success: "profile_updated" })
+  );
 }

@@ -4,6 +4,7 @@ import { resetPasswordAction } from "@/actions/auth";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
 import { createServerClient } from "@/lib/supabase/server";
+import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
 import { ResetPasswordSession } from "./ResetPasswordSession";
 
 export default async function ResetPasswordPage({
@@ -27,6 +28,15 @@ export default async function ResetPasswordPage({
     typeof resolvedSearchParams.token_hash === "string" ||
     (typeof resolvedSearchParams.access_token === "string" &&
       typeof resolvedSearchParams.refresh_token === "string");
+
+  const error =
+    typeof resolvedSearchParams.error === "string"
+      ? resolvedSearchParams.error
+      : undefined;
+  const message =
+    typeof resolvedSearchParams.message === "string"
+      ? resolvedSearchParams.message
+      : undefined;
 
   // A new password can only be set once a recovery session exists. The
   // session is established from the recovery material in the URL by
@@ -60,6 +70,8 @@ export default async function ResetPasswordPage({
             </p>
           </div>
 
+          <FeedbackBanner dict={dict} error={error} success={message} />
+
           {!hasRecoverySession && (
             <Suspense
               fallback={
@@ -79,6 +91,7 @@ export default async function ResetPasswordPage({
 
           {hasRecoverySession && (
             <form action={resetPasswordAction} className="space-y-5" noValidate>
+              <input type="hidden" name="locale" value={locale} />
               <div>
                 <label
                   htmlFor="password"
@@ -125,7 +138,7 @@ export default async function ResetPasswordPage({
           <p className="mt-8 text-center text-sm text-bone/60">
             {dict.auth.haveAccount}{" "}
             <Link
-              href="/auth/login"
+              href={`/${locale}/auth/login`}
               className="font-semibold text-bone transition-colors hover:text-crimson-bright"
             >
               {dict.auth.login}

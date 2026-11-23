@@ -250,6 +250,53 @@ const en = {
     invalidEmail: "Please enter a valid email address.",
     passwordsDontMatch: "Passwords do not match.",
   },
+  feedback: {
+    errors: {
+      generic_error: "Something went wrong. Please try again.",
+      invalid_credentials: "Invalid email or password.",
+      invalid_email: "Please enter a valid email address.",
+      email_already_exists: "An account with this email already exists.",
+      email_not_confirmed: "Please confirm your email address before logging in.",
+      weak_password: "Please choose a stronger password.",
+      passwords_dont_match: "Passwords do not match.",
+      validation_failed:
+        "Please check the details you entered and try again.",
+      registration_failed:
+        "We couldn't create your account. Please try again.",
+      reset_request_failed:
+        "We couldn't send the reset link. Please try again.",
+      reset_failed:
+        "We couldn't reset your password. Please request a new link.",
+      not_authenticated: "You must be logged in to access this page.",
+      admin_access_required: "Admin access required.",
+      enquiry_failed:
+        "We couldn't send your enquiry. Please try again or email us directly.",
+      profile_update_failed:
+        "We couldn't save your changes. Please try again.",
+      project_create_failed:
+        "We couldn't create the project. Please check the details and try again.",
+      project_update_failed:
+        "We couldn't update the project. Please try again.",
+      project_delete_failed:
+        "We couldn't delete the project. Please try again.",
+      enquiry_status_update_failed:
+        "We couldn't update the enquiry status. Please try again.",
+      rate_limited: "Too many attempts. Please wait a moment and try again.",
+    },
+    success: {
+      registered:
+        "Account created. Please check your email to verify before logging in.",
+      reset_link_sent:
+        "If an account exists for that email, a reset link is on its way.",
+      password_reset: "Password reset successful. You can now log in.",
+      enquiry_submitted: "Thank you — your enquiry has been received.",
+      profile_updated: "Profile updated successfully.",
+      project_created: "Project created.",
+      project_updated: "Project updated.",
+      project_deleted: "Project deleted.",
+      enquiry_status_updated: "Enquiry status updated.",
+    },
+  },
 };
 
 export default en;

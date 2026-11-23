@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { Reveal } from "@/components/motion/Reveal";
-import { EyebrowRule } from "@/components/sections/SectionShell";
-import { getCurrentProfile } from "@/actions/auth";
-import type { Dictionary } from "@/i18n/types";
+import { requireCustomer } from "@/lib/profiles";
+import { getDictionary } from "@/i18n/dictionaries";
+import { isLocale, type Locale } from "@/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -21,26 +19,16 @@ type ProjectRow = {
 
 export default async function CustomerProjectsPage({
   params,
-  dict,
 }: {
   params: Promise<{ locale: string }>;
-  dict: Dictionary;
 }) {
   const { locale } = await params;
+  if (!isLocale(locale)) return null;
+  const dict = getDictionary(locale as Locale);
   const supabase = await createServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/dashboard/projects`);
-  }
-
-  const profileResult = await getCurrentProfile();
-  const profile = profileResult?.profile;
-  if (!profile || profile.role !== "customer") {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/dashboard/projects`);
-  }
+  // Signed-out visitors are sent to the login page.
+  const profile = await requireCustomer(locale as Locale);
 
   const { data: projects } = await supabase
     .from("projects")

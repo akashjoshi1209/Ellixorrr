@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { Reveal } from "@/components/motion/Reveal";
-import { EyebrowRule } from "@/components/sections/SectionShell";
-import { adminListEnquiries, adminUpdateEnquiryStatus } from "@/actions/admin";
-import type { Dictionary } from "@/i18n/types";
+import { adminListEnquiries } from "@/lib/admin-data";
+import { adminUpdateEnquiryStatus } from "@/actions/admin";
+import { requireAdmin } from "@/lib/profiles";
+import { getDictionary } from "@/i18n/dictionaries";
+import { isLocale, type Locale } from "@/i18n/config";
+import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
@@ -32,12 +32,14 @@ function EnquiryStatusForm({
   return (
     <form
       action={adminUpdateEnquiryStatus}
-      className="flex gap-1"
+      className="flex gap-1 justify-end"
       noValidate
     >
+      <input type="hidden" name="locale" value={locale} />
       <select
         name="status"
         defaultValue={enquiry.status}
+        aria-label="Enquiry status"
         className="rounded border px-2 py-1 text-xs focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20 bg-charcoal"
       >
         <option value="new">New</option>
@@ -58,27 +60,31 @@ function EnquiryStatusForm({
 
 export default async function AdminEnquiriesPage({
   params,
-  dict,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  dict: Dictionary;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { locale } = await params;
-  const cookieStore = await cookies();
-  const supabase = await createServerClient();
+  if (!isLocale(locale)) return null;
+  const dict = getDictionary(locale as Locale);
+  const resolvedLocale = locale as Locale;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/admin/enquiries`);
-  }
+  // Server-side authorization: only admins may access admin routes.
+  await requireAdmin(resolvedLocale);
+
+  const resolvedSearchParams = await searchParams;
+  const error =
+    typeof resolvedSearchParams.error === "string"
+      ? resolvedSearchParams.error
+      : undefined;
+  const message =
+    typeof resolvedSearchParams.message === "string"
+      ? resolvedSearchParams.message
+      : undefined;
 
   const result = await adminListEnquiries();
-  if ("error" in result) {
-    notFound();
-  }
-  const enquiries = (result.enquiries ?? []) as EnquiryRow[];
+  const enquiries = result.data;
 
   return (
     <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
@@ -104,6 +110,8 @@ export default async function AdminEnquiriesPage({
           </div>
         </Reveal>
 
+        <FeedbackBanner dict={dict} error={error} success={message} />
+
         <Reveal delay={0.1}>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -124,12 +132,15 @@ export default async function AdminEnquiriesPage({
                   <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
                     Received
                   </th>
+                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 text-right">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {enquiries.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-bone/40">
+                    <td colSpan={6} className="py-8 text-center text-bone/40">
                       No enquiries found.
                     </td>
                   </tr>
@@ -147,12 +158,8 @@ export default async function AdminEnquiriesPage({
                           {enquiry.business_name || "—"}
                         </div>
                       </td>
-                      <td className="py-4 text-bone/70">
-                        {enquiry.email}
-                      </td>
-                      <td className="py-4 text-bone/60">
-                        {enquiry.service_type}
-                      </td>
+                      <td className="py-4 text-bone/70">{enquiry.email}</td>
+                      <td className="py-4 text-bone/60">{enquiry.service_type}</td>
                       <td className="py-4">
                         <span
                           className={`px-2 py-0.5 rounded text-[0.65rem] font-semibold tracking-wider ${

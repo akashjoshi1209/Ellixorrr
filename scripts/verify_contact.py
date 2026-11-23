@@ -1,8 +1,26 @@
 """Contact integration verification for Ellixorrr Phase 3."""
 import json
+import sys
 from playwright.sync_api import sync_playwright
 
+# The Windows console defaults to a code page that cannot render Devanagari.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:  # noqa: BLE001
+    pass
+
 results = []
+
+# Next.js injects its own visually-hidden route announcer, which carries
+# role="alert". It is framework chrome, not application feedback, so it is
+# excluded when counting application alert banners.
+COUNT_ALERTS_JS = """() => [...document.querySelectorAll('[role="alert"]')]
+    .filter((el) => !el.closest('#__next-route-announcer__')).length"""
+
+
+def count_app_alerts(page):
+    """Number of application-level alert banners currently in the DOM."""
+    return page.evaluate(COUNT_ALERTS_JS)
 
 
 def check(name, ok, detail=""):
@@ -108,19 +126,29 @@ with sync_playwright() as p:
             page.locator('button[type="submit"]').count() == 1,
         )
 
-        # Form validation - submit empty
+        # Form validation - submit empty.
+        # The form carries `noValidate`, so the browser does not raise its
+        # own "This field is required." bubbles. Validation is performed
+        # server-side by the enquiry action, which redirects back to the
+        # localized homepage contact section with a `validation_failed`
+        # code that renders a localized alert banner.
         page.click('button[type="submit"]')
-        page.wait_for_timeout(500)
-        # Check that at least one required-field error message is visible (any language)
-        error_selectors = [
-            'text="This field is required."',
-            'text="यह फ़ील्ड आवश्यक है।"',
-            'text="हे क्षेत्र आवश्यक आहे।"',
-        ]
-        error_visible = sum(
-            page.locator(sel).count() for sel in error_selectors
+        page.wait_for_timeout(2500)
+        check(
+            f"{locale}: Empty submit is rejected server-side",
+            "error=validation_failed" in page.url,
+            page.url,
         )
-        check(f"{locale}: Form shows validation errors on empty submit", error_visible >= 1)
+        check(
+            f"{locale}: Empty submit stays on the homepage contact section",
+            "/contact" not in page.url.split("?")[0].rstrip("/"),
+            page.url,
+        )
+        check(
+            f"{locale}: Form shows a localized validation error banner",
+            count_app_alerts(page) == 1,
+            f"alerts={count_app_alerts(page)}",
+        )
 
         # No console errors
         real_errors = [e for e in console_errors if "favicon" not in e.lower()]

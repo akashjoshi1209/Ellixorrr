@@ -1,10 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { Reveal } from "@/components/motion/Reveal";
-import { getCurrentProfile } from "@/actions/auth";
+import { requireCustomer } from "@/lib/profiles";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
 
@@ -36,18 +35,9 @@ export default async function CustomerDashboardPage({
   const dict = getDictionary(locale as Locale);
   const supabase = await createServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/dashboard`);
-  }
-
-  const profileResult = await getCurrentProfile();
-  const profile = profileResult?.profile;
-  if (!profile || profile.role !== "customer") {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/dashboard`);
-  }
+  // Signed-out visitors are sent to the login page; admins are sent to the
+  // admin dashboard (they are not customers).
+  const profile = await requireCustomer(locale as Locale);
 
   const { data: projects } = await supabase
     .from("projects")
@@ -182,7 +172,7 @@ export default async function CustomerDashboardPage({
                 {dict.auth.emptyProjects}
               </p>
               <Link
-                href={`/${locale}/contact`}
+                href={`/${locale}#contact`}
                 className="mt-4 inline-flex items-center gap-2 rounded-full bg-bone px-5 py-2.5 text-sm font-semibold text-charcoal transition-colors hover:bg-crimson hover:text-bone"
               >
                 {dict.auth.contactUs}

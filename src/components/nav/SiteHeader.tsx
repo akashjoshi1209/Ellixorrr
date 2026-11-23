@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Menu, X, LogIn, User, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { LanguageSwitcher } from "@/components/nav/LanguageSwitcher";
 import { logoutAction } from "@/actions/auth";
+import { createBrowserClient } from "@/lib/supabase/client";
 import type { Dictionary } from "@/i18n/types";
 import type { Locale } from "@/i18n/config";
 
@@ -23,12 +23,36 @@ const sectionLinks = [
 ] as const;
 
 export function SiteHeader({ locale, dict }: SiteHeaderProps) {
-  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
+
+  // The session is read from the browser Supabase client so the header
+  // reflects the real auth state. The publishable key is the only key the
+  // browser ever sees — the service-role key stays server-side.
+  useEffect(() => {
+    const supabase = createBrowserClient();
+    let active = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setIsAuthenticated(Boolean(data.session));
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setIsAuthenticated(Boolean(session));
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -54,8 +78,9 @@ export function SiteHeader({ locale, dict }: SiteHeaderProps) {
   const close = useCallback(() => setOpen(false), []);
 
   const handleLogout = async () => {
-    await logoutAction();
-    router.push(`/${locale}`);
+    // The action signs the session out and redirects to the localized
+    // homepage itself — no client-side navigation is needed.
+    await logoutAction(locale);
   };
 
   return (

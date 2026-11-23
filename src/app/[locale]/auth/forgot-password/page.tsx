@@ -2,16 +2,28 @@ import Link from "next/link";
 import { forgotPasswordAction } from "@/actions/auth";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
-import type { Dictionary } from "@/i18n/types";
+import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
 
 export default async function ForgotPasswordPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) return null;
   const dict = getDictionary(locale as Locale);
+
+  const resolvedSearchParams = await searchParams;
+  const error =
+    typeof resolvedSearchParams.error === "string"
+      ? resolvedSearchParams.error
+      : undefined;
+  const message =
+    typeof resolvedSearchParams.message === "string"
+      ? resolvedSearchParams.message
+      : undefined;
 
   return (
     <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal min-h-svh flex flex-col justify-center py-28 md:py-40">
@@ -27,7 +39,10 @@ export default async function ForgotPasswordPage({
             </p>
           </div>
 
+          <FeedbackBanner dict={dict} error={error} success={message} />
+
           <form action={forgotPasswordAction} className="space-y-5" noValidate>
+            <input type="hidden" name="locale" value={locale} />
             <div>
               <label
                 htmlFor="email"
@@ -56,7 +71,7 @@ export default async function ForgotPasswordPage({
           <p className="mt-8 text-center text-sm text-bone/60">
             {dict.auth.haveAccount}{" "}
             <Link
-              href="/auth/login"
+              href={`/${locale}/auth/login`}
               className="font-semibold text-bone transition-colors hover:text-crimson-bright"
             >
               {dict.auth.login}

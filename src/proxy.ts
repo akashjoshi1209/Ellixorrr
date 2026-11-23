@@ -1,89 +1,182 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isLocale, negotiateLocale, LOCALE_COOKIE } from "@/i18n/config";
-import { createServerClient } from "@/lib/supabase/server";
+import type { User } from "@supabase/supabase-js";
+import {
+  isLocale,
+  negotiateLocale,
+  LOCALE_COOKIE,
+  type Locale,
+} from "@/i18n/config";
+import { createProxySupabaseClient } from "@/lib/supabase/proxy";
+import {
+  LOGIN_PATH,
+  isAdminPath,
+  isAuthPath,
+  isCustomerPath,
+  localizedPath,
+  stripLocalePrefix,
+} from "@/lib/navigation";
 
-const AUTH_PREFIX = "/auth";
-const DASHBOARD_PREFIX = "/dashboard";
-const ADMIN_PREFIX = "/admin";
-const LOGIN_PATH = "/auth/login";
+/**
+ * Auth routes that stay reachable for signed-in users.
+ *
+ * `/auth/login` must remain reachable so a signed-in visitor can still be
+ * redirected after a session change, and `/auth/reset-password` must remain
+ * reachable so the password-recovery flow can complete.
+ */
+const AUTH_ROUTES_ALLOWED_WHEN_SIGNED_IN = new Set([
+  LOGIN_PATH,
+  "/auth/reset-password",
+]);
 
-function isAuthRoute(pathname: string): boolean {
-  return pathname.startsWith(AUTH_PREFIX);
+/**
+ * True when the request carries a Supabase auth cookie. Anonymous traffic
+ * skips the session refresh entirely, which avoids a round trip to Supabase
+ * on every public page view.
+ */
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.includes("auth-token"));
 }
 
-function isCustomerRoute(pathname: string): boolean {
-  return pathname.startsWith(DASHBOARD_PREFIX);
+/**
+ * True when the request is a background fetch rather than a real page load.
+ *
+ * Next.js prefetches every route linked in the viewport. The language
+ * switcher links to all three locale routes, so those prefetch requests
+ * pass through the proxy. They must NOT update the locale preference
+ * cookie: otherwise the last prefetch would overwrite the locale the
+ * visitor is actually reading, and the remembered locale would drift away
+ * from the page on screen.
+ *
+ * Next.js strips its own `RSC` and `Next-Router-Prefetch` headers before
+ * the proxy runs, so the standard Fetch Metadata header is used instead:
+ *
+ *   sec-fetch-mode: navigate  -> a top-level browser navigation
+ *   sec-fetch-mode: cors      -> the router's RSC prefetch / navigation
+ *
+ * A request with no `sec-fetch-mode` at all comes from a non-browser
+ * client (curl, a bot, a server-side fetch). That is a direct request for
+ * the page, so the preference is recorded as usual.
+ */
+function isBackgroundRequest(request: NextRequest): boolean {
+  // Belt and braces: if a future Next.js version forwards the internal
+  // prefetch header, honour it too.
+  if (request.headers.get("next-router-prefetch") === "1") return true;
+
+  const mode = request.headers.get("sec-fetch-mode");
+  if (!mode) return false;
+
+  return mode !== "navigate";
 }
 
-function isAdminRoute(pathname: string): boolean {
-  return pathname.startsWith(ADMIN_PREFIX);
-}
-
-function stripLocale(pathname: string): string {
-  const segment = pathname.split("/")[1];
-  if (isLocale(segment)) {
-    return pathname.slice(segment.length + 1) || "/";
+/**
+ * Copies the cookies of one response onto another. Used when the proxy
+ * redirects after refreshing the session: the refreshed auth cookies must
+ * survive the redirect.
+ */
+function copyCookies(source: NextResponse, target: NextResponse): void {
+  for (const cookie of source.cookies.getAll()) {
+    target.cookies.set(cookie.name, cookie.value, cookie);
   }
-  return pathname;
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const method = request.method;
+
+  const segment = pathname.split("/")[1];
+  const hasLocalePrefix = isLocale(segment);
 
   // ------------------------------------------------------------------
-  // 1. Preserve existing locale negotiation (unchanged behavior).
+  // 1. Locale negotiation.
   // ------------------------------------------------------------------
-  const segment = pathname.split("/")[1];
-  if (isLocale(segment)) {
-    const response = NextResponse.next();
-    response.cookies.set(LOCALE_COOKIE, segment, {
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  const locale: Locale = hasLocalePrefix
+    ? segment
+    : cookieLocale && isLocale(cookieLocale)
+      ? cookieLocale
+      : negotiateLocale(request.headers.get("accept-language"));
+
+  if (!hasLocalePrefix) {
+    // Send the visitor to the localized equivalent of the current path.
+    // 307 preserves the request method and body.
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.redirect(url);
+  }
+
+  // ------------------------------------------------------------------
+  // 2. Supabase cookie/session refresh.
+  //
+  //    This MUST run for locale-prefixed routes as well — otherwise the
+  //    auth cookies are never refreshed and the routes rendered below the
+  //    proxy see a stale session. The proxy is the only place where the
+  //    session cookie may be written (a Server Component render may not
+  //    modify cookies).
+  // ------------------------------------------------------------------
+  let response = NextResponse.next({ request });
+  let user: User | null = null;
+
+  if (hasSupabaseAuthCookie(request)) {
+    const proxyClient = createProxySupabaseClient(request);
+    try {
+      const {
+        data: { user: currentUser },
+      } = await proxyClient.client.auth.getUser();
+      user = currentUser;
+    } catch {
+      // A failed refresh must not break the page: treat it as signed out.
+      user = null;
+    }
+    response = proxyClient.getResponse();
+  }
+
+  // Remember the locale the visitor is browsing in.
+  //
+  // Background fetches are excluded: the router's prefetches are
+  // speculative requests for other locales and must never overwrite the
+  // current preference.
+  if (!isBackgroundRequest(request)) {
+    response.cookies.set(LOCALE_COOKIE, locale, {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
     });
-    return response;
   }
-
-  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
-  const locale =
-    cookieLocale && isLocale(cookieLocale)
-      ? cookieLocale
-      : negotiateLocale(request.headers.get("accept-language"));
-
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-
-  // ------------------------------------------------------------------
-  // 2. Supabase cookie/session refresh.
-  //    Required by @supabase/ssr so that auth cookies are read and
-  //    refreshed on every server-rendered request. This is a read-only
-  //    operation against the anon key; it does not perform authorization.
-  // ------------------------------------------------------------------
-  const supabase = await createServerClient();
-  await supabase.auth.getUser();
 
   // ------------------------------------------------------------------
   // 3. Optimistic redirects based on auth state only.
   //    Authorization itself is enforced independently in server-side
   //    handlers and by Supabase RLS — never here.
   // ------------------------------------------------------------------
-  const { data: { user } } = await supabase.auth.getUser();
-  const barePath = stripLocale(pathname);
+  const barePath = stripLocalePrefix(pathname);
 
-  // Redirect authenticated users away from auth pages.
-  if (user && isAuthRoute(barePath) && barePath !== LOGIN_PATH) {
-    const redirectTo = `/${locale}${barePath.replace(AUTH_PREFIX, DASHBOARD_PREFIX)}`;
-    return NextResponse.redirect(new URL(redirectTo, request.url));
+  if (method === "GET" || method === "HEAD") {
+    // Redirect signed-in users away from the auth pages they no longer need.
+    if (
+      user &&
+      isAuthPath(barePath) &&
+      !AUTH_ROUTES_ALLOWED_WHEN_SIGNED_IN.has(barePath)
+    ) {
+      const redirectResponse = NextResponse.redirect(
+        new URL(localizedPath(locale, "/dashboard"), request.url)
+      );
+      copyCookies(response, redirectResponse);
+      return redirectResponse;
+    }
+
+    // Redirect anonymous visitors away from the protected routes.
+    if (!user && (isCustomerPath(barePath) || isAdminPath(barePath))) {
+      const loginUrl = new URL(localizedPath(locale, LOGIN_PATH), request.url);
+      loginUrl.searchParams.set("redirectTo", localizedPath(locale, barePath));
+      const redirectResponse = NextResponse.redirect(loginUrl);
+      copyCookies(response, redirectResponse);
+      return redirectResponse;
+    }
   }
 
-  // Redirect unauthenticated users away from protected routes.
-  if (!user && (isCustomerRoute(barePath) || isAdminRoute(barePath))) {
-    const loginUrl = new URL(`/${locale}${LOGIN_PATH}`, request.url);
-    loginUrl.searchParams.set("redirectTo", barePath);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.redirect(url);
+  return response;
 }
 
 export const config = {

@@ -24,7 +24,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Process dict={dict} />
       <Work dict={dict} />
       <Suspense fallback={<div>Loading contact section...</div>}>
-        <ContactCTA dict={dict} />
+        <ContactCTA dict={dict} locale={locale as Locale} />
       </Suspense>
     </>
   );

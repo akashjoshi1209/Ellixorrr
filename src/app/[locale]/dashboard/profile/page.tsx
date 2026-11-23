@@ -1,13 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { updateProfileAction } from "@/actions/auth";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
-import type { Dictionary } from "@/i18n/types";
+import { requireCustomer } from "@/lib/profiles";
+import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
 
 export default async function CustomerProfilePage({
   params,
@@ -19,39 +18,28 @@ export default async function CustomerProfilePage({
   const { locale } = await params;
   if (!isLocale(locale)) return null;
   const dict = getDictionary(locale as Locale);
+  const resolvedLocale = locale as Locale;
+
   const searchParamsResolved = await searchParams;
   const error =
-    (typeof searchParamsResolved["error"] === "string"
+    typeof searchParamsResolved["error"] === "string"
       ? searchParamsResolved["error"]
-      : undefined) || undefined;
+      : undefined;
   const message =
-    (typeof searchParamsResolved["message"] === "string"
+    typeof searchParamsResolved["message"] === "string"
       ? searchParamsResolved["message"]
-      : undefined) || undefined;
+      : undefined;
 
   const supabase = await createServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/dashboard/profile`);
-  }
+  // Signed-out visitors are sent to the login page.
+  const profile = await requireCustomer(resolvedLocale);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const profileResult = await (supabase as any)
+  const { data: profileRow } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (profileResult.error) {
-    redirect(
-      `/${locale}/dashboard/profile?error=${encodeURIComponent(profileResult.error.message)}`
-    );
-  }
-
-  const profile = profileResult.data;
+    .select("id, full_name, email, phone")
+    .eq("id", profile.id)
+    .maybeSingle();
 
   return (
     <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
@@ -75,18 +63,10 @@ export default async function CustomerProfilePage({
           </Link>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded border border-crimson/20 bg-crimson/10 text-sm text-crimson/70">
-            {decodeURIComponent(error)}
-          </div>
-        )}
-        {message === "updated" && (
-          <div className="mb-6 p-4 rounded border border-bone/10 bg-bone/5 text-sm text-bone/70">
-            Profile updated successfully.
-          </div>
-        )}
+        <FeedbackBanner dict={dict} error={error} success={message} />
 
         <form action={updateProfileAction} className="space-y-6" noValidate>
+          <input type="hidden" name="locale" value={locale} />
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <label
@@ -100,7 +80,7 @@ export default async function CustomerProfilePage({
                 name="full_name"
                 type="text"
                 autoComplete="name"
-                defaultValue={profile?.full_name ?? ""}
+                defaultValue={profileRow?.full_name ?? ""}
                 className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
               />
             </div>
@@ -116,7 +96,7 @@ export default async function CustomerProfilePage({
                 name="email"
                 type="email"
                 autoComplete="email"
-                defaultValue={profile?.email ?? ""}
+                defaultValue={profileRow?.email ?? ""}
                 className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
               />
             </div>
@@ -132,23 +112,7 @@ export default async function CustomerProfilePage({
                 name="phone"
                 type="tel"
                 autoComplete="tel"
-                defaultValue={profile?.phone ?? ""}
-                className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="business_name"
-                className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-              >
-                Business name
-              </label>
-              <input
-                id="business_name"
-                name="business_name"
-                type="text"
-                autoComplete="organization"
-                defaultValue={profile?.business_name ?? ""}
+                defaultValue={profileRow?.phone ?? ""}
                 className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
               />
             </div>

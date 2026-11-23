@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-import { Reveal } from "@/components/motion/Reveal";
-import { EyebrowRule } from "@/components/sections/SectionShell";
-import { adminListProjects, adminCreateProject } from "@/actions/admin";
-import { projectSchema, type ProjectInput } from "@/lib/validations";
-import type { Dictionary } from "@/i18n/types";
+import { adminListProjects } from "@/lib/admin-data";
+import { adminCreateProject } from "@/actions/admin";
+import { requireAdmin } from "@/lib/profiles";
+import { getDictionary } from "@/i18n/dictionaries";
+import { isLocale, type Locale } from "@/i18n/config";
+import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
@@ -21,47 +19,33 @@ const STATUSES = [
   "on_hold",
 ] as const;
 
-type ProjectRow = {
-  id: string;
-  customer_id: string;
-  project_name: string;
-  service_type: string;
-  description: string | null;
-  status: string;
-  start_date: string | null;
-  expected_completion_date: string | null;
-  created_at: string;
-  profiles?: { full_name: string | null; email: string | null } | null;
-};
-
 export default async function AdminProjectsPage({
   params,
-  dict,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  dict: Dictionary;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { locale } = await params;
-  const cookieStore = await cookies();
-  const supabase = await createServerClient();
+  if (!isLocale(locale)) return null;
+  const dict = getDictionary(locale as Locale);
+  const resolvedLocale = locale as Locale;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/${locale}/auth/login?redirectTo=/${locale}/admin/projects`);
-  }
+  // Server-side authorization: only admins may access admin routes.
+  await requireAdmin(resolvedLocale);
+
+  const resolvedSearchParams = await searchParams;
+  const error =
+    typeof resolvedSearchParams.error === "string"
+      ? resolvedSearchParams.error
+      : undefined;
+  const message =
+    typeof resolvedSearchParams.message === "string"
+      ? resolvedSearchParams.message
+      : undefined;
 
   const result = await adminListProjects();
-  if ("error" in result) {
-    notFound();
-  }
-  const projects = (result.projects ?? []) as ProjectRow[];
-
-  const searchParams = new URLSearchParams(
-    typeof window !== "undefined" ? window.location.search : ""
-  );
-  const error = searchParams.get("error") || undefined;
+  const projects = result.data;
 
   return (
     <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
@@ -85,16 +69,13 @@ export default async function AdminProjectsPage({
           </Link>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded border border-crimson/20 bg-crimson/10 text-sm text-crimson/70">
-            {decodeURIComponent(error)}
-          </div>
-        )}
+        <FeedbackBanner dict={dict} error={error} success={message} />
 
         {/* Create project form */}
         <div className="mb-8 p-6 border border-bone/10 bg-charcoal/40 rounded-md">
           <h3 className="display-md mb-4">Create new project</h3>
           <form action={adminCreateProject} className="grid gap-4 md:grid-cols-2" noValidate>
+            <input type="hidden" name="locale" value={locale} />
             <div className="md:col-span-2">
               <label
                 htmlFor="customer_id"
@@ -216,7 +197,7 @@ export default async function AdminProjectsPage({
                   </td>
                 </tr>
               ) : (
-                projects.map((project: ProjectRow) => (
+                projects.map((project) => (
                   <tr
                     key={project.id}
                     className="border-b border-bone/10 hover:bg-charcoal/20 transition-colors"
@@ -227,7 +208,7 @@ export default async function AdminProjectsPage({
                       </div>
                     </td>
                     <td className="py-4 text-bone/70">
-                      {project.profiles?.full_name || "Unknown"}
+                      {project.customer?.full_name || "Unknown"}
                     </td>
                     <td className="py-4 text-bone/60">
                       {project.service_type}

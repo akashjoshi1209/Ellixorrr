@@ -1,0 +1,297 @@
+[
+  {
+    "check": "root redirects to a locale-prefixed URL",
+    "ok": true,
+    "detail": "http://localhost:3000/en"
+  },
+  {
+    "check": "root issued a redirect",
+    "ok": true,
+    "detail": "http://localhost:3000/ -> http://localhost:3000/en"
+  },
+  {
+    "check": "en: homepage loads without console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: brand name present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: html lang attribute correct",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: exactly four service cards",
+    "ok": true,
+    "detail": "count=4"
+  },
+  {
+    "check": "en: WhatsApp channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: email channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: phone channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "en: JSON-LD parses and is intact",
+    "ok": true,
+    "detail": "{\"@context\":\"https://schema.org\",\"@type\":\"ProfessionalService\",\"name\":\"ELLIXORRR\",\"description\":\"Ellixorrr is a SaaS and"
+  },
+  {
+    "check": "hi: homepage loads without console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: brand name present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: html lang attribute correct",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: exactly four service cards",
+    "ok": true,
+    "detail": "count=4"
+  },
+  {
+    "check": "hi: WhatsApp channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: email channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: phone channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "hi: JSON-LD parses and is intact",
+    "ok": true,
+    "detail": "{\"@context\":\"https://schema.org\",\"@type\":\"ProfessionalService\",\"name\":\"ELLIXORRR\",\"description\":\"Ellixorrr एक SaaS और टे"
+  },
+  {
+    "check": "mr: homepage loads without console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: brand name present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: html lang attribute correct",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: exactly four service cards",
+    "ok": true,
+    "detail": "count=4"
+  },
+  {
+    "check": "mr: WhatsApp channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: email channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: phone channel intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "mr: JSON-LD parses and is intact",
+    "ok": true,
+    "detail": "{\"@context\":\"https://schema.org\",\"@type\":\"ProfessionalService\",\"name\":\"ELLIXORRR\",\"description\":\"Ellixorrr ही SaaS आणि ट"
+  },
+  {
+    "check": "unknown error code is not rendered as visible text",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "unknown error code renders no application alert banner",
+    "ok": true,
+    "detail": "alerts=0"
+  },
+  {
+    "check": "unknown error code does not break out of the page's scripts",
+    "ok": true,
+    "detail": "script count changed"
+  },
+  {
+    "check": "known error code renders a localized alert",
+    "ok": true,
+    "detail": "alerts=1"
+  },
+  {
+    "check": "known error code shows the English message",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "known success code renders a status banner",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "Hindi error message is localized",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "Marathi error message is localized",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "external redirectTo is not placed in the form",
+    "ok": true,
+    "detail": "hidden inputs found=0"
+  },
+  {
+    "check": "safe redirectTo is preserved",
+    "ok": true,
+    "detail": "/en/dashboard"
+  },
+  {
+    "check": "/en/dashboard: anonymous visitor redirected to login",
+    "ok": true,
+    "detail": "http://localhost:3000/en/auth/login?redirectTo=%2Fen%2Fdashboard"
+  },
+  {
+    "check": "/en/admin: anonymous visitor redirected to login",
+    "ok": true,
+    "detail": "http://localhost:3000/en/auth/login?redirectTo=%2Fen%2Fadmin"
+  },
+  {
+    "check": "/en/admin/enquiries: anonymous visitor redirected to login",
+    "ok": true,
+    "detail": "http://localhost:3000/en/auth/login?redirectTo=%2Fen%2Fadmin%2Fenquiries"
+  },
+  {
+    "check": "/hi/dashboard: anonymous visitor redirected to login",
+    "ok": true,
+    "detail": "http://localhost:3000/hi/auth/login?redirectTo=%2Fhi%2Fdashboard"
+  },
+  {
+    "check": "en/auth/login: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "en/auth/register: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "en/auth/forgot-password: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "en/auth/reset-password: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "hi/auth/login: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "hi/auth/register: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "hi/auth/forgot-password: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "hi/auth/reset-password: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "mr/auth/login: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "mr/auth/register: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "mr/auth/forgot-password: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "mr/auth/reset-password: renders",
+    "ok": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "contact form keeps business_name (enquiries)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "proxy sets the locale cookie to the browsed locale",
+    "ok": true,
+    "detail": "hi"
+  },
+  {
+    "check": "prefetch requests do not set the locale cookie",
+    "ok": true,
+    "detail": "prefetch set-cookie pairs=[('1', []), ('1', [])]"
+  },
+  {
+    "check": "router prefetches for the other locales were observed",
+    "ok": true,
+    "detail": "count=2"
+  },
+  {
+    "check": "empty contact submit stays on the homepage",
+    "ok": true,
+    "detail": "http://localhost:3000/en?error=validation_failed#contact"
+  },
+  {
+    "check": "empty contact submit shows a localized error banner",
+    "ok": true,
+    "detail": "alerts=1"
+  },
+  {
+    "check": "header shows the signed-out CTA",
+    "ok": true,
+    "detail": ""
+  }
+]
