@@ -9,6 +9,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/sections/SiteFooter";
 import { MotionProvider } from "@/components/motion/MotionProvider";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -55,9 +56,15 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale as Locale);
 
+  // Google Tag Manager container ID. Only rendered when configured so the
+  // tag is inactive in environments without a GTM container (e.g. local
+  // development without NEXT_PUBLIC_GTM_ID).
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+
   return (
     <html lang={locale} dir="ltr" className="h-full">
       <body className="flex min-h-full flex-col">
+        {gtmId && <GoogleTagManager gtmId={gtmId} />}
         {/* Structured data — only facts defined by the brief; no invented
             address, phone, rating or awards until real ones exist.
             The payload is escaped so a `<` in any value can never close
