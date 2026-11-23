@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createBrowserClient } from "@/lib/supabase/client";
+import type { Locale } from "@/i18n/config";
 
 type ResetPasswordSessionProps = {
   /**
@@ -13,6 +14,7 @@ type ResetPasswordSessionProps = {
   verifyingMessage: string;
   invalidMessage: string;
   requestNewLinkLabel: string;
+  locale: Locale;
 };
 
 /**
@@ -37,6 +39,7 @@ export function ResetPasswordSession({
   verifyingMessage,
   invalidMessage,
   requestNewLinkLabel,
+  locale,
 }: ResetPasswordSessionProps) {
   const [invalid, setInvalid] = useState(false);
   const startedRef = useRef(false);
@@ -109,7 +112,7 @@ export function ResetPasswordSession({
       <div className="mb-6 p-4 rounded border border-crimson/20 bg-crimson/10 text-sm text-crimson/70">
         <p>{invalidMessage}</p>
         <Link
-          href="/auth/forgot-password"
+          href={`/${locale}/auth/forgot-password`}
           className="mt-2 inline-block font-semibold text-bone underline transition-colors hover:text-crimson-bright"
         >
           {requestNewLinkLabel}

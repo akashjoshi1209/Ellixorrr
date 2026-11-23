@@ -85,6 +85,7 @@ export default async function ResetPasswordPage({
                 verifyingMessage={dict.auth.verifyingResetLink}
                 invalidMessage={dict.auth.invalidResetLink}
                 requestNewLinkLabel={dict.auth.requestNewResetLink}
+                locale={locale as Locale}
               />
             </Suspense>
           )}
