@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ERROR_CODES,
   SUCCESS_CODES,
@@ -18,6 +18,7 @@ import {
   resolveLocale,
   safeRedirectPath,
   stripLocalePrefix,
+  getAppOrigin,
 } from "@/lib/navigation";
 import {
   adminEnquiryStatusSchema,
@@ -235,6 +236,34 @@ describe("navigation helpers", () => {
     expect(isAdminPath("/admin")).toBe(true);
     expect(isAdminPath("/admin/enquiries")).toBe(true);
     expect(isAdminPath("/dashboard")).toBe(false);
+  });
+});
+
+describe("app origin", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns NEXT_PUBLIC_APP_URL when set (trailing slash stripped)", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://ellixorrr.dpdns.org/");
+    expect(getAppOrigin()).toBe("https://ellixorrr.dpdns.org");
+  });
+
+  it("falls back to localhost in development", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    expect(getAppOrigin()).toBe("http://localhost:3000");
+  });
+
+  it("falls back to the production domain in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    expect(getAppOrigin()).toBe("https://ellixorrr.dpdns.org");
+  });
+
+  it("never falls back to NEXT_PUBLIC_SUPABASE_URL", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    expect(getAppOrigin()).toBe("https://ellixorrr.dpdns.org");
+    expect(getAppOrigin()).not.toContain("supabase.co");
   });
 });
 

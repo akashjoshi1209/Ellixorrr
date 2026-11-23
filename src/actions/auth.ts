@@ -12,6 +12,7 @@ import {
   localizedPath,
   resolveLocale,
   safeRedirectPath,
+  getAppOrigin,
 } from "@/lib/navigation";
 import { getCurrentProfile } from "@/lib/profiles";
 import {
@@ -166,10 +167,10 @@ export async function forgotPasswordAction(formData: FormData) {
   const { error } = await supabase.auth.resetPasswordForEmail(
     validated.data.email,
     {
-      // NOTE: this still points at the Supabase project host. Correcting it
-      // requires a Site URL / Redirect URL change in the Supabase dashboard,
-      // which is outside the scope of the application-only remediation.
-      redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/reset-password`,
+      // Build the reset-password redirect from the application's own origin,
+      // not from Supabase. The locale prefix is preserved so the visitor
+      // lands on the correct localized page after clicking the reset link.
+      redirectTo: `${getAppOrigin()}/${locale}/auth/reset-password`,
     }
   );
 

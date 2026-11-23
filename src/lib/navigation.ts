@@ -118,3 +118,26 @@ export function safeRedirectPath(candidate: unknown): string | null {
 
   return bare === "/" ? `/${localeSegment}` : `/${localeSegment}${bare}`;
 }
+
+/**
+ * Returns the application's public origin (scheme + host, no trailing
+ * slash). Used to build absolute redirect URLs such as the Supabase
+ * password-reset `redirectTo`.
+ *
+ * Resolution order:
+ *  1. `NEXT_PUBLIC_APP_URL` when set (trailing slash stripped);
+ *  2. `http://localhost:3000` in development, so local flows work without
+ *     any extra configuration;
+ *  3. `https://ellixorrr.dpdns.org` in production, the configured
+ *     production domain.
+ *
+ * `NEXT_PUBLIC_APP_URL` is the preferred mechanism: it lets operators
+ * deploy to any origin without code changes. The function never falls back
+ * to `NEXT_PUBLIC_SUPABASE_URL`, which points at Supabase, not the app.
+ */
+export function getAppOrigin(): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  if (process.env.NODE_ENV === "development") return "http://localhost:3000";
+  return "https://ellixorrr.dpdns.org";
+}
