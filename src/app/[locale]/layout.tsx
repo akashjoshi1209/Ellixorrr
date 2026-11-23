@@ -10,6 +10,8 @@ import { SiteHeader } from "@/components/nav/SiteHeader";
 import { SiteFooter } from "@/components/sections/SiteFooter";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { GoogleTagManager } from "@next/third-parties/google";
+import { absoluteRootUrl, absoluteUrl } from "@/lib/site-config";
+import { buildGraph } from "@/lib/structured-data";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -23,15 +25,22 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
+
+  const siteUrl = absoluteUrl(locale, "/");
+
+  // All routes under [locale] default to noindex. The homepage overrides
+  // this in its own metadata export; auth, dashboard, and admin routes
+  // intentionally remain noindex because they contain no public content
+  // and are protected by server-side authorization.
   return {
     title: dict.meta.title,
     description: dict.meta.description,
     alternates: {
-      canonical: `/${locale}`,
+      canonical: siteUrl,
       languages: {
-        en: "/en",
-        hi: "/hi",
-        mr: "/mr",
+        en: absoluteUrl("en", "/"),
+        hi: absoluteUrl("hi", "/"),
+        mr: absoluteUrl("mr", "/"),
       },
     },
     openGraph: {
@@ -39,9 +48,24 @@ export async function generateMetadata({
       siteName: "ELLIXORRR",
       title: dict.meta.title,
       description: dict.meta.description,
+      url: siteUrl,
       locale,
+      images: [
+        {
+          url: absoluteRootUrl("/og-image.svg"),
+          width: 1200,
+          height: 630,
+          alt: "ELLIXORRR — Websites, Applications, Automations, Custom Solutions",
+        },
+      ],
     },
-    robots: { index: true, follow: true },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.meta.title,
+      description: dict.meta.description,
+      images: [absoluteRootUrl("/og-image.svg")],
+    },
+    robots: { index: false, follow: true },
   };
 }
 
@@ -67,28 +91,20 @@ export default async function LocaleLayout({
         {gtmId && <GoogleTagManager gtmId={gtmId} />}
         {/* Structured data — only facts defined by the brief; no invented
             address, phone, rating or awards until real ones exist.
-            The payload is escaped so a `<` in any value can never close
-            the script element early. */}
-        <script
-          type="application/ld+json"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "ProfessionalService",
-              name: "ELLIXORRR",
-              description: dict.meta.description,
-              knowsAbout: ["Websites", "Applications", "Automations", "Custom Solutions"],
-              inLanguage: locale,
-              email: "ellixorrr@gmail.com",
-              telephone: "+919404044607",
-              url: `https://ellixorrr.com/${locale}`,
-            })
-              .replace(/&/g, "\\u0026")
-              .replace(/</g, "\\u003c")
-              .replace(/>/g, "\\u003e"),
-          }}
-        />
+            Each entity is rendered as its own JSON-LD block. */}
+        {buildGraph(locale, dict.meta.description).map((entity, index) => (
+          <script
+            key={index}
+            type="application/ld+json"
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(entity)
+                .replace(/&/g, "\\u0026")
+                .replace(/</g, "\\u003c")
+                .replace(/>/g, "\\u003e"),
+            }}
+          />
+        ))}
         <a
           href="#home"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-bone focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-charcoal"

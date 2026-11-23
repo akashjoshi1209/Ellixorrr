@@ -9,6 +9,14 @@ import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  // Override the layout default (index: false) so the public homepage is
+  // indexable. Auth, dashboard, and admin routes inherit the layout default
+  // of index: false because they contain no public content.
+  robots: { index: true, follow: true },
+};
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

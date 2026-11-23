@@ -1,0 +1,35 @@
+# ELLIXORRR
+
+Ellixorrr is a SaaS and technology agency that helps businesses earn more while keeping operations simple. We build websites, applications, automations, and custom solutions around your actual requirements — and stay responsible for them long after launch.
+
+## Services
+
+- **Websites**: Fast, well-structured websites and online stores that load quickly, rank properly, and turn visitors into enquiries and orders.
+- **Applications**: Applications shaped around your operations — portals, dashboards, and internal tools — instead of forcing your process into someone else's box.
+- **Automations**: Workflow automation and AI agents that quietly take over repetitive work — follow-ups, data entry, reporting — so your team can focus on customers.
+- **Custom Solutions**: When one tool isn't enough, we combine websites, applications, and automations into a single system built around your exact requirements.
+
+## Contact
+
+- Email: ellixorrr@gmail.com
+- Phone: +91 94040 44607
+- WhatsApp: https://wa.me/919404044607
+
+## Locales
+
+- English: https://ellixorrr.dpdns.org/en
+- Hindi: https://ellixorrr.dpdns.org/hi
+- Marathi: https://ellixorrr.dpdns.org/mr
+
+## Public Pages
+
+- Homepage: https://ellixorrr.dpdns.org/en (also /hi, /mr)
+- Sitemap: https://ellixorrr.dpdns.org/sitemap.xml
+
+## About
+
+Ellixorrr deliberately limits itself to four things it does exceptionally well: websites, applications, automations, and custom solutions. The agency works with businesses of every type — from local shops to growing companies — and takes responsibility for what it ships: development, maintenance, and improvement.
+
+## Not Included
+
+This file intentionally excludes private customer dashboards, admin interfaces, authentication routes, and customer data. Those routes are protected by server-side authorization and are not part of the public website.
