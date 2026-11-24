@@ -227,18 +227,31 @@ export async function resetPasswordAction(formData: FormData) {
  * ----------------------------------------------------------------------- */
 
 /**
- * Logs only a validated machine-readable code. Message, hint and details are
- * deliberately excluded because they can echo submitted personal data.
+ * Logs only a validated machine-readable code and numeric HTTP status.
+ * Message, hint and details are deliberately excluded because they can echo
+ * submitted personal data.
  */
-function logEnquiryInsertError(error: { code: string }): void {
+function logEnquiryInsertError(
+  error: { code: string },
+  status: number
+): void {
   const code =
-    typeof error.code === "string" && /^[A-Z0-9]{1,12}$/.test(error.code)
+    typeof error.code === "string" &&
+    /^[A-Z0-9]{1,12}$/.test(error.code)
       ? error.code
       : "unknown";
 
+  const safeStatus =
+    Number.isInteger(status) && status >= 0 && status <= 599
+      ? status
+      : null;
+
   console.error(
     "[CONTACT_ENQUIRY_INSERT_FAILED]",
-    JSON.stringify({ code })
+    JSON.stringify({
+      code,
+      status: safeStatus,
+    })
   );
 }
 
@@ -261,7 +274,7 @@ export async function submitEnquiryAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("enquiries").insert({
+  const { error, status } = await supabase.from("enquiries").insert({
     customer_id: user?.id ?? null,
     name: validated.data.name,
     email: validated.data.email,
@@ -273,7 +286,7 @@ export async function submitEnquiryAction(formData: FormData) {
   });
 
   if (error) {
-    logEnquiryInsertError(error);
+    logEnquiryInsertError(error, status);
     return { error: "enquiry_failed" };
   }
 
