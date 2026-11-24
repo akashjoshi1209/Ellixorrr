@@ -226,6 +226,22 @@ export async function resetPasswordAction(formData: FormData) {
  *  Public enquiry (homepage contact form)
  * ----------------------------------------------------------------------- */
 
+/**
+ * Logs only a validated machine-readable code. Message, hint and details are
+ * deliberately excluded because they can echo submitted personal data.
+ */
+function logEnquiryInsertError(error: { code: string }): void {
+  const code =
+    typeof error.code === "string" && /^[A-Z0-9]{1,12}$/.test(error.code)
+      ? error.code
+      : "unknown";
+
+  console.error(
+    "[CONTACT_ENQUIRY_INSERT_FAILED]",
+    JSON.stringify({ code })
+  );
+}
+
 export async function submitEnquiryAction(formData: FormData) {
   const validated = enquirySchema.safeParse({
     name: readString(formData, "name"),
@@ -257,6 +273,7 @@ export async function submitEnquiryAction(formData: FormData) {
   });
 
   if (error) {
+    logEnquiryInsertError(error);
     return { error: "enquiry_failed" };
   }
 
