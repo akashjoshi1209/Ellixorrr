@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 import type { Locale } from "@/i18n/config";
 import { createServerClient } from "@/lib/supabase/server";
 import {
+  createEnquiryFetchProbe,
+  logEnquiryInsertError,
+} from "@/lib/supabase/enquiry-diagnostics";
+import {
   feedbackPath,
   mapAuthError,
   type ErrorCode,
@@ -226,35 +230,6 @@ export async function resetPasswordAction(formData: FormData) {
  *  Public enquiry (homepage contact form)
  * ----------------------------------------------------------------------- */
 
-/**
- * Logs only a validated machine-readable code and numeric HTTP status.
- * Message, hint and details are deliberately excluded because they can echo
- * submitted personal data.
- */
-function logEnquiryInsertError(
-  error: { code: string },
-  status: number
-): void {
-  const code =
-    typeof error.code === "string" &&
-    /^[A-Z0-9]{1,12}$/.test(error.code)
-      ? error.code
-      : "unknown";
-
-  const safeStatus =
-    Number.isInteger(status) && status >= 0 && status <= 599
-      ? status
-      : null;
-
-  console.error(
-    "[CONTACT_ENQUIRY_INSERT_FAILED]",
-    JSON.stringify({
-      code,
-      status: safeStatus,
-    })
-  );
-}
-
 export async function submitEnquiryAction(formData: FormData) {
   const validated = enquirySchema.safeParse({
     name: readString(formData, "name"),
@@ -274,19 +249,22 @@ export async function submitEnquiryAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error, status } = await supabase.from("enquiries").insert({
-    customer_id: user?.id ?? null,
-    name: validated.data.name,
-    email: validated.data.email,
-    phone: validated.data.phone || null,
-    business_name: validated.data.business_name || null,
-    service_type: validated.data.service_type,
-    project_description: validated.data.project_description,
-    status: "new",
-  });
+  const probe = createEnquiryFetchProbe();
+  const { error, status } = await supabase
+    .from("enquiries", { fetch: probe.fetch })
+    .insert({
+      customer_id: user?.id ?? null,
+      name: validated.data.name,
+      email: validated.data.email,
+      phone: validated.data.phone || null,
+      business_name: validated.data.business_name || null,
+      service_type: validated.data.service_type,
+      project_description: validated.data.project_description,
+      status: "new",
+    });
 
   if (error) {
-    logEnquiryInsertError(error, status);
+    logEnquiryInsertError(error, status, probe.getTransport());
     return { error: "enquiry_failed" };
   }
 
