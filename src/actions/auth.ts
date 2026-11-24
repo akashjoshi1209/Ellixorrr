@@ -227,8 +227,6 @@ export async function resetPasswordAction(formData: FormData) {
  * ----------------------------------------------------------------------- */
 
 export async function submitEnquiryAction(formData: FormData) {
-  const locale = readLocale(formData);
-
   const validated = enquirySchema.safeParse({
     name: readString(formData, "name"),
     email: readString(formData, "email"),
@@ -238,9 +236,7 @@ export async function submitEnquiryAction(formData: FormData) {
     project_description: readString(formData, "project_description"),
   });
   if (!validated.success) {
-    redirect(
-      feedbackPath(locale, "/", { error: "validation_failed" }, "contact")
-    );
+    return { error: "validation_failed" };
   }
 
   const supabase = await createServerClient();
@@ -261,14 +257,10 @@ export async function submitEnquiryAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(
-      feedbackPath(locale, "/", { error: "enquiry_failed" }, "contact")
-    );
+    return { error: "enquiry_failed" };
   }
 
-  redirect(
-    feedbackPath(locale, "/", { success: "enquiry_submitted" }, "contact")
-  );
+  return { success: "enquiry_submitted" };
 }
 
 /** ------------------------------------------------------------------------
