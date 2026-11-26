@@ -1,6 +1,6 @@
 # ELLIXORRR
 
-Ellixorrr is a SaaS and technology agency that helps businesses earn more while keeping operations simple. We build websites, applications, automations, and custom solutions around your actual requirements — and stay responsible for them long after launch.
+Ellixorrr is a technology services company helping businesses build and manage their digital presence through tailored websites, applications, business automation, and custom technology solutions. We work around each business's actual requirements and provide ongoing support and improvements after launch.
 
 ## Services
 
@@ -17,18 +17,24 @@ Ellixorrr is a SaaS and technology agency that helps businesses earn more while 
 
 ## Locales
 
-- English: https://ellixorrr.dpdns.org/en
-- Hindi: https://ellixorrr.dpdns.org/hi
-- Marathi: https://ellixorrr.dpdns.org/mr
+- English: /en
+- Hindi: /hi
+- Marathi: /mr
 
 ## Public Pages
 
-- Homepage: https://ellixorrr.dpdns.org/en (also /hi, /mr)
-- Sitemap: https://ellixorrr.dpdns.org/sitemap.xml
+- Homepage: /en (also /hi, /mr)
+- Sitemap: /sitemap.xml
 
 ## About
 
 Ellixorrr deliberately limits itself to four things it does exceptionally well: websites, applications, automations, and custom solutions. The agency works with businesses of every type — from local shops to growing companies — and takes responsibility for what it ships: development, maintenance, and improvement.
+
+## Verification
+
+- The published business facts are the four services and the contact channels listed above.
+- No client list, testimonials, reviews, certifications, registrations, or performance statistics are published.
+- Portfolio entries are published only with written permission and a verifiable artifact or working demo.
 
 ## Not Included
 
