@@ -122,6 +122,11 @@ src/lib/
   email.ts                — server-side email helper (placeholder, no credentials)
 ```
 
+> **2026-11-25 Phase 4 correction:** `src/lib/email.ts` was planned here but was
+> never implemented. The current tree has no repository email layer; signup and
+> recovery email depend entirely on live Supabase Auth/SMTP configuration. See
+> `reports/phase-4/AUTH_EMAIL_READINESS.md`.
+
 ### Environment variables
 | Variable | Exposure | Purpose |
 |---|---|---|

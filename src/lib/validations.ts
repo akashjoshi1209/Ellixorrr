@@ -8,6 +8,7 @@
  * Compatible with Zod v4 API.
  */
 import { z } from "zod";
+import { SERVICE_TYPES } from "@/lib/services";
 
 /**
  * Shared constraints.
@@ -38,12 +39,22 @@ const DESCRIPTION = z
   .min(1, "Description is required.")
   .max(5000, "Description is too long.");
 
-const SERVICE_TYPE = z.enum({
-  Websites: "Websites",
-  Applications: "Applications",
-  Automations: "Automations",
-  "Custom Solutions": "Custom Solutions",
-});
+const SERVICE_TYPE = z.enum(SERVICE_TYPES);
+
+/** Accepts the `YYYY-MM-DD` value produced by an HTML date input. */
+const PROJECT_DATE = z.string().refine((value) => {
+  if (value === "") return true;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+  );
+}, "Invalid date.");
+
+function optionalProjectDate(value: string | undefined): string | undefined {
+  return value ? value : undefined;
+}
 
 export const registerSchema = z
   .object({
@@ -132,8 +143,8 @@ export const projectSchema = z.object({
   service_type: SERVICE_TYPE,
   description: DESCRIPTION.optional().or(z.literal("")),
   status: PROJECT_STATUS.optional(),
-  start_date: z.string().datetime().optional().or(z.literal("")),
-  expected_completion_date: z.string().datetime().optional().or(z.literal("")),
+  start_date: PROJECT_DATE.optional().transform(optionalProjectDate),
+  expected_completion_date: PROJECT_DATE.optional().transform(optionalProjectDate),
 });
 
 export type ProjectInput = z.infer<typeof projectSchema>;
@@ -145,6 +156,8 @@ export const adminCreateProjectSchema = z.object({
   service_type: SERVICE_TYPE,
   description: DESCRIPTION.optional().or(z.literal("")),
   status: PROJECT_STATUS.optional(),
+  start_date: PROJECT_DATE.optional().transform(optionalProjectDate),
+  expected_completion_date: PROJECT_DATE.optional().transform(optionalProjectDate),
 });
 
 export type AdminCreateProjectInput = z.infer<typeof adminCreateProjectSchema>;
@@ -152,10 +165,13 @@ export type AdminCreateProjectInput = z.infer<typeof adminCreateProjectSchema>;
 /** Payload accepted by the admin "update project" action. */
 export const adminUpdateProjectSchema = z.object({
   project_id: z.string().uuid("Invalid project ID."),
+  customer_id: z.string().uuid("Invalid customer ID."),
   project_name: NAME,
   service_type: SERVICE_TYPE,
   description: DESCRIPTION.optional().or(z.literal("")),
   status: PROJECT_STATUS,
+  start_date: PROJECT_DATE.optional().transform(optionalProjectDate),
+  expected_completion_date: PROJECT_DATE.optional().transform(optionalProjectDate),
 });
 
 export type AdminUpdateProjectInput = z.infer<typeof adminUpdateProjectSchema>;
@@ -181,3 +197,14 @@ export const projectUpdateSchema = z.object({
 });
 
 export type ProjectUpdateInput = z.infer<typeof projectUpdateSchema>;
+
+/** Payload accepted by the admin "add project update" action. */
+export const adminCreateProjectUpdateSchema = z.object({
+  project_id: z.string().uuid("Invalid project ID."),
+  title: NAME,
+  description: z.string().max(5000, "Description is too long.").optional().or(z.literal("")),
+});
+
+export type AdminCreateProjectUpdateInput = z.infer<
+  typeof adminCreateProjectUpdateSchema
+>;

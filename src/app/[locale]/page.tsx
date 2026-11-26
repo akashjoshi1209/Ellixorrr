@@ -31,7 +31,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <WhyEllixorrr dict={dict} />
       <Process dict={dict} />
       <Work dict={dict} />
-      <Suspense fallback={<div>Loading contact section...</div>}>
+      <Suspense
+        fallback={
+          <div role="status" className="px-gutter py-28 text-sm text-muted">
+            {dict.contact.form.loading}
+          </div>
+        }
+      >
         <ContactCTA dict={dict} locale={locale as Locale} />
       </Suspense>
     </>

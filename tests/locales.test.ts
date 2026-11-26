@@ -22,6 +22,15 @@ describe("locale dictionaries", () => {
     }
   });
 
+  it("keeps corrected high-visibility translations free of known typos", () => {
+    expect(dictionaries.hi.feedback.success.enquiry_submitted).toContain("पूछताछ");
+    expect(dictionaries.hi.feedback.success.enquiry_submitted).not.toContain("पूछतछ");
+    expect(dictionaries.mr.contact.whatsapp.message).toContain("माझ्या आवश्यकता");
+    expect(dictionaries.mr.contact.whatsapp.message).not.toContain("माऱ्या");
+    expect(dictionaries.mr.auth.noProjects).toBe("सध्या कोणताही प्रोजेक्ट नाही.");
+    expect(dictionaries.mr.intro.title).toContain("गुंतागुंतीचे करणे नाही");
+  });
+
   it("no translation is an empty string", () => {
     for (const locale of locales) {
       const leaves = leafPaths(dictionaries[locale]);

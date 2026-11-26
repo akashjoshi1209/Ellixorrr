@@ -5,11 +5,20 @@
  * existing project. No invented addresses, ratings, awards, or business
  * claims.
  *
- * Stable @id values are based on the configured site URL so entity
- * references remain consistent across locales.
+ * Service names and descriptions come from the active locale dictionary.
+ * Canonical service values and stable @id values come from the unchanged
+ * English service keys so stored data and entity references stay stable
+ * across locales.
  */
 import { type Locale } from "@/i18n/config";
-import { absoluteUrl, absoluteRootUrl, getSiteUrl } from "@/lib/site-config";
+import { getDictionary } from "@/i18n/dictionaries";
+import { SERVICE_TYPES, type ServiceType } from "@/lib/services";
+import {
+  absoluteUrl,
+  absoluteRootUrl,
+  CONTACT,
+  getSiteUrl,
+} from "@/lib/site-config";
 
 /** Stable organization identifier. */
 const ORGANIZATION_ID = `${getSiteUrl()}/#organization`;
@@ -17,41 +26,17 @@ const ORGANIZATION_ID = `${getSiteUrl()}/#organization`;
 /** Stable website identifier. */
 const WEBSITE_ID = `${getSiteUrl()}/#website`;
 
-/** Service identifiers. */
-const SERVICE_IDS: Record<string, string> = {
-  Websites: `${getSiteUrl()}/#service/websites`,
-  Applications: `${getSiteUrl()}/#service/applications`,
-  Automations: `${getSiteUrl()}/#service/automations`,
-  "Custom Solutions": `${getSiteUrl()}/#service/custom-solutions`,
+/** Stable service slugs, indexed by the canonical stored service value. */
+const SERVICE_SLUGS: Record<ServiceType, string> = {
+  Websites: "websites",
+  Applications: "applications",
+  Automations: "automations",
+  "Custom Solutions": "custom-solutions",
 };
 
-/** The four factual service offerings from the existing project. */
-const SERVICES = [
-  {
-    name: "Websites",
-    description:
-      "Fast, well-structured websites and online stores that load quickly, rank properly and turn visitors into enquiries and orders.",
-    url: `${getSiteUrl()}/#service/websites`,
-  },
-  {
-    name: "Applications",
-    description:
-      "Applications shaped around your operations — portals, dashboards and internal tools — instead of forcing your process into someone else's box.",
-    url: `${getSiteUrl()}/#service/applications`,
-  },
-  {
-    name: "Automations",
-    description:
-      "Workflow automation and AI agents that quietly take over repetitive work — follow-ups, data entry, reporting — so your team can focus on customers.",
-    url: `${getSiteUrl()}/#service/automations`,
-  },
-  {
-    name: "Custom Solutions",
-    description:
-      "When one tool isn't enough, we combine websites, applications and automations into a single system built around your exact requirements.",
-    url: `${getSiteUrl()}/#service/custom-solutions`,
-  },
-] as const;
+function serviceId(service: ServiceType): string {
+  return `${getSiteUrl()}/#service/${SERVICE_SLUGS[service]}`;
+}
 
 /**
  * Builds an Organization entity.
@@ -67,10 +52,10 @@ export function buildOrganization(locale: Locale) {
     name: "ELLIXORRR",
     url: absoluteRootUrl("/"),
     logo: absoluteRootUrl("/ellixorrr-emblem.svg"),
-    email: "ellixorrr@gmail.com",
-    telephone: "+919404044607",
+    email: CONTACT.email,
+    telephone: CONTACT.phoneDial,
     inLanguage: locale,
-    knowsAbout: SERVICES.map((s) => s.name),
+    knowsAbout: [...SERVICE_TYPES],
   };
 }
 
@@ -92,20 +77,32 @@ export function buildWebSite(locale: Locale) {
 
 /**
  * Builds Service entities for the four actual offerings.
+ *
+ * Dictionary order is enforced by tests/locales.test.ts, so index-based
+ * mapping to canonical service values is stable.
  */
 export function buildServices(locale: Locale) {
-  return SERVICES.map((service) => ({
-    "@id": SERVICE_IDS[service.name],
-    "@type": "Service",
-    serviceType: service.name,
-    name: service.name,
-    description: service.description,
-    url: service.url,
-    provider: {
-      "@id": ORGANIZATION_ID,
-    },
-    inLanguage: locale,
-  }));
+  const dict = getDictionary(locale);
+
+  return dict.services.items.map((service, index) => {
+    const canonical = SERVICE_TYPES[index];
+    if (!canonical) {
+      throw new Error(`Missing canonical service for index ${index}`);
+    }
+
+    return {
+      "@id": serviceId(canonical),
+      "@type": "Service",
+      serviceType: canonical,
+      name: service.name,
+      description: service.description,
+      url: absoluteRootUrl(`/#service/${SERVICE_SLUGS[canonical]}`),
+      provider: {
+        "@id": ORGANIZATION_ID,
+      },
+      inLanguage: locale,
+    };
+  });
 }
 
 /**
@@ -123,12 +120,12 @@ export function buildProfessionalService(locale: Locale) {
     provider: {
       "@id": ORGANIZATION_ID,
     },
-    service: SERVICES.map((s) => ({
-      "@id": SERVICE_IDS[s.name],
+    service: SERVICE_TYPES.map((service) => ({
+      "@id": serviceId(service),
     })),
     inLanguage: locale,
-    email: "ellixorrr@gmail.com",
-    telephone: "+919404044607",
+    email: CONTACT.email,
+    telephone: CONTACT.phoneDial,
   };
 }
 

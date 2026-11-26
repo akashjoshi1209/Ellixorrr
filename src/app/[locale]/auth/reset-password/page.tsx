@@ -1,10 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { LockKeyhole } from "lucide-react";
 import { resetPasswordAction } from "@/actions/auth";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
 import { createServerClient } from "@/lib/supabase/server";
 import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
+import { AuthShell } from "@/components/ui/AuthShell";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { ResetPasswordSession } from "./ResetPasswordSession";
 
 export default async function ResetPasswordPage({
@@ -57,96 +60,88 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal min-h-svh flex flex-col justify-center py-28 md:py-40">
-      <div className="relative mx-auto max-w-xl px-gutter">
-        <div className="max-w-md mx-auto">
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-5 h-5 rounded-full bg-crimson/10 flex items-center justify-center text-crimson font-bold">🔒</span>
-              <h2 className="display-md">{dict.auth.resetPassword}</h2>
-            </div>
-            <p className="text-sm leading-relaxed text-bone/70">
-              Set a new password for your Ellixorrr account.
+    <AuthShell
+      label={dict.auth.access}
+      title={dict.auth.resetPassword}
+      intro={dict.auth.resetPasswordIntro}
+      icon={<LockKeyhole aria-hidden="true" />}
+    >
+      <FeedbackBanner dict={dict} error={error} success={message} />
+
+      {!hasRecoverySession && (
+        <Suspense
+          fallback={
+            <p
+              role="status"
+              className="mb-6 rounded border border-rule bg-forest/40 p-4 text-sm text-muted"
+            >
+              {dict.auth.verifyingResetLink}
             </p>
+          }
+        >
+          <ResetPasswordSession
+            hasRecoveryParams={hasRecoveryParams}
+            verifyingMessage={dict.auth.verifyingResetLink}
+            invalidMessage={dict.auth.invalidResetLink}
+            requestNewLinkLabel={dict.auth.requestNewResetLink}
+            locale={locale as Locale}
+          />
+        </Suspense>
+      )}
+
+      {hasRecoverySession && (
+        <form action={resetPasswordAction} className="space-y-5">
+          <input type="hidden" name="locale" value={locale} />
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+            >
+              {dict.auth.password}
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              className="w-full rounded border border-rule-strong bg-forest/40 px-3 py-2 text-sm transition-colors focus-visible:border-crimson-bright focus-visible:outline-none"
+            />
           </div>
-
-          <FeedbackBanner dict={dict} error={error} success={message} />
-
-          {!hasRecoverySession && (
-            <Suspense
-              fallback={
-                <p className="mb-6 p-4 rounded border border-bone/10 bg-charcoal/40 text-sm text-bone/60">
-                  {dict.auth.verifyingResetLink}
-                </p>
-              }
+          <div>
+            <label
+              htmlFor="confirm_password"
+              className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-muted"
             >
-              <ResetPasswordSession
-                hasRecoveryParams={hasRecoveryParams}
-                verifyingMessage={dict.auth.verifyingResetLink}
-                invalidMessage={dict.auth.invalidResetLink}
-                requestNewLinkLabel={dict.auth.requestNewResetLink}
-                locale={locale as Locale}
-              />
-            </Suspense>
-          )}
+              {dict.auth.confirmPassword}
+            </label>
+            <input
+              id="confirm_password"
+              name="confirm_password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              className="w-full rounded border border-rule-strong bg-forest/40 px-3 py-2 text-sm transition-colors focus-visible:border-crimson-bright focus-visible:outline-none"
+            />
+          </div>
+          <SubmitButton pendingLabel={dict.auth.sending}>
+            {dict.auth.setNewPassword}
+          </SubmitButton>
+        </form>
+      )}
 
-          {hasRecoverySession && (
-            <form action={resetPasswordAction} className="space-y-5" noValidate>
-              <input type="hidden" name="locale" value={locale} />
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-                >
-                  {dict.auth.password}
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  minLength={8}
-                  className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="confirm_password"
-                  className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-                >
-                  {dict.auth.confirmPassword}
-                </label>
-                <input
-                  id="confirm_password"
-                  name="confirm_password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  minLength={8}
-                  className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-bone px-6 py-3 text-sm font-semibold text-charcoal transition-colors duration-200 hover:bg-crimson hover:text-bone focus-visible:bg-crimson focus-visible:text-bone"
-              >
-                {dict.auth.setNewPassword}
-              </button>
-            </form>
-          )}
-
-          <p className="mt-8 text-center text-sm text-bone/60">
-            {dict.auth.haveAccount}{" "}
-            <Link
-              href={`/${locale}/auth/login`}
-              className="font-semibold text-bone transition-colors hover:text-crimson-bright"
-            >
-              {dict.auth.login}
-            </Link>
-          </p>
-        </div>
-      </div>
-    </section>
+      <p className="mt-8 text-center text-sm text-muted">
+        {dict.auth.haveAccount}{" "}
+        <Link
+          href={`/${locale}/auth/login`}
+          prefetch={false}
+          className="font-semibold text-bone transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
+        >
+          {dict.auth.login}
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

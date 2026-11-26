@@ -89,7 +89,7 @@ All changes are uncommitted. The user must review before committing, pushing, or
 
 ### Phase 4 — AEO and GEO Foundation
 - **llms.txt:** `public/llms.txt` — brand identity, services, contact, locales, public pages
-- **AI crawler policy:** robots.txt — disallow GPTBot/ChatGPT-User/anthropic-ai; allow Google-Extended/CCBot with same disallow rules
+- **AI crawler policy:** robots.txt — historical note only; the current implementation in `src/app/robots.ts` allows all crawlers and disallows private locale-prefixed and unprefixed application routes. No active AI-specific allow/deny groups are configured.
 - **Content clarity:** Existing content already clear, factual, no keyword stuffing, no hidden text
 - **Brand consistency:** ELLIXORRR name, domain, service descriptions, contact info consistent across all structured data
 

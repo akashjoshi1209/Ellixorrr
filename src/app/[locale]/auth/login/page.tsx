@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { LockKeyhole } from "lucide-react";
 import { loginAction } from "@/actions/auth";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
 import { safeRedirectPath } from "@/lib/navigation";
 import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
+import { AuthShell } from "@/components/ui/AuthShell";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export default async function LoginPage({
   params,
@@ -25,84 +28,90 @@ export default async function LoginPage({
     typeof resolvedSearchParams.message === "string"
       ? resolvedSearchParams.message
       : undefined;
+  // Only the identifier is restored after a failed login; the submitted
+  // password is always discarded.
+  const email =
+    typeof resolvedSearchParams.email === "string"
+      ? resolvedSearchParams.email.slice(0, 254)
+      : "";
 
   // Only a validated, same-origin, locale-prefixed path may be carried into
   // the form. Anything else is dropped and the visitor is routed by role.
   const redirectTo = safeRedirectPath(resolvedSearchParams.redirectTo);
 
   return (
-    <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal min-h-svh flex flex-col justify-center py-28 md:py-40">
-      <div className="relative mx-auto max-w-xl px-gutter">
-        <div className="max-w-md mx-auto">
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-5 h-5 rounded-full bg-crimson/10 flex items-center justify-center text-crimson font-bold">🔒</span>
-              <h2 className="display-md">{dict.auth.login}</h2>
-            </div>
-            <p className="text-sm leading-relaxed text-bone/70">
-              Welcome back. Enter your credentials to access your account.
-            </p>
-          </div>
+    <AuthShell
+      label={dict.auth.access}
+      title={dict.auth.login}
+      intro={dict.auth.loginIntro}
+      icon={<LockKeyhole aria-hidden="true" />}
+    >
+      <FeedbackBanner dict={dict} error={error} success={message} />
 
-          <FeedbackBanner dict={dict} error={error} success={message} />
-
-          <form action={loginAction} className="space-y-5" noValidate>
-            <input type="hidden" name="locale" value={locale} />
-            {redirectTo ? (
-              <input type="hidden" name="redirectTo" value={redirectTo} />
-            ) : null}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-              >
-                {dict.auth.email}
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-                placeholder={dict.contact.email.address}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 mb-1"
-              >
-                {dict.auth.password}
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="w-full rounded border px-3 py-2 text-sm focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-bone px-6 py-3 text-sm font-semibold text-charcoal transition-colors duration-200 hover:bg-crimson hover:text-bone focus-visible:bg-crimson focus-visible:text-bone"
-            >
-              {dict.auth.login}
-            </button>
-          </form>
-
-          <p className="mt-8 text-center text-sm text-bone/60">
-            {dict.auth.noAccount}{" "}
-            <Link
-              href={`/${locale}/auth/register`}
-              className="font-semibold text-bone transition-colors hover:text-crimson-bright"
-            >
-              {dict.auth.register}
-            </Link>
-          </p>
+      <form action={loginAction} className="space-y-5">
+        <input type="hidden" name="locale" value={locale} />
+        {redirectTo ? (
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+        ) : null}
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+          >
+            {dict.auth.email}
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            defaultValue={email}
+            required
+            className="w-full rounded border border-rule-strong bg-forest/40 px-3 py-2 text-sm transition-colors focus-visible:border-crimson-bright focus-visible:outline-none"
+            placeholder={dict.contact.email.address}
+          />
         </div>
+        <div>
+          <label
+            htmlFor="password"
+            className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+          >
+            {dict.auth.password}
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            className="w-full rounded border border-rule-strong bg-forest/40 px-3 py-2 text-sm transition-colors focus-visible:border-crimson-bright focus-visible:outline-none"
+          />
+        </div>
+        <SubmitButton pendingLabel={dict.auth.sending}>
+          {dict.auth.login}
+        </SubmitButton>
+      </form>
+
+      <div className="mt-4 text-right">
+        <Link
+          href={`/${locale}/auth/forgot-password`}
+          prefetch={false}
+          className="text-sm text-crimson-bright transition-colors hover:text-bone focus-visible:text-bone"
+        >
+          {dict.auth.forgotPassword}
+        </Link>
       </div>
-    </section>
+
+      <p className="mt-8 text-center text-sm text-muted">
+        {dict.auth.noAccount}{" "}
+        <Link
+          href={`/${locale}/auth/register`}
+          prefetch={false}
+          className="font-semibold text-bone transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
+        >
+          {dict.auth.register}
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

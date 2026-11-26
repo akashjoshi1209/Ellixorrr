@@ -31,7 +31,7 @@ export function Logo({ href, linkLabel }: LogoProps) {
   return (
     <a
       href={href}
-      className="group inline-flex items-center"
+      className="group inline-flex min-h-11 min-w-11 items-center justify-center"
       aria-label={`ELLIXORRR — ${linkLabel}`}
     >
       <LogoMark className="h-8 w-auto shrink-0 transition-opacity duration-300 group-hover:opacity-80" />

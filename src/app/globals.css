@@ -10,8 +10,13 @@
   --color-charcoal: #171717;
   --color-forest: #06110c;
   --color-crimson: #a31c1b;
-  --color-crimson-bright: #c93534;
+  --color-crimson-bright: #e15553;
   --color-bone: #f1f0eb;
+
+  /* Forest Ledger — derived from the four brand colors; no new hues. */
+  --color-rule: rgb(241 240 235 / 0.14);
+  --color-rule-strong: rgb(241 240 235 / 0.28);
+  --color-ink-muted: rgb(241 240 235 / 0.7);
 
   --font-display:
     "Space Grotesk Variable", "Noto Sans Devanagari Variable", ui-sans-serif, system-ui, sans-serif;
@@ -54,6 +59,12 @@
     outline-offset: 3px;
   }
 
+  /* Fixed-header anchors land below the navigation instead of behind it. */
+  section[id],
+  main[id] {
+    scroll-margin-top: 5.5rem;
+  }
+
   /* Devanagari needs slightly more breathing room than Latin. */
   :lang(hi),
   :lang(mr) {
@@ -66,9 +77,9 @@
 /* Oversized editorial display type (hero). */
 @utility display-xl {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 9.5vw, 8.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.03em;
+  font-size: clamp(3rem, 8.4vw, 7.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
   font-weight: 600;
 }
 
@@ -90,19 +101,52 @@
   font-weight: 600;
 }
 
+/* Devanagari glyphs need more vertical space than the Latin-tuned display
+   line-heights above. The token is set on :lang(hi) and :lang(mr). */
+:lang(hi) .display-xl,
+:lang(mr) .display-xl,
+:lang(hi) .display-lg,
+:lang(mr) .display-lg,
+:lang(hi) .display-md,
+:lang(mr) .display-md {
+  line-height: var(--deva-line);
+}
+
 /* Uppercase section eyebrows. */
 @utility eyebrow {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgb(241 240 235 / 0.55);
+  color: var(--color-ink-muted);
 }
 
 /* 1px hairline borders used across the design. */
 @utility hairline {
   border-color: rgb(241 240 235 / 0.1);
+}
+
+/* Readable secondary copy — still bone, never a new accent hue. */
+@utility text-muted {
+  color: var(--color-ink-muted);
+}
+
+/* Stronger hairline for technical/ledger surfaces. */
+@utility ledger-rule {
+  border-color: var(--color-rule-strong);
+}
+
+/* Layered dossier surface used by the hero and portal shells. */
+@utility dossier-panel {
+  border: 1px solid var(--color-rule-strong);
+  background-color: rgb(6 17 12 / 0.62);
+}
+
+/* Horizontal ledger lines, used behind dense technical content. */
+@utility ledger-grid {
+  background-image: linear-gradient(var(--color-rule) 1px, transparent 1px);
+  background-size: 100% 3.5rem;
 }
 
 /* Forest-green atmospheric glow, layered behind content. */
@@ -142,15 +186,9 @@
   user-select: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/* Motion components opt out of spatial animation in JavaScript via
+   usePrefersReducedMotion(); native smooth scrolling is disabled above.
+   Non-motion color/border transitions intentionally remain enabled. */
 
 /* ------------------------------------------------------------------
    ThreeUI vendored component — Emerald Horizon base styles.

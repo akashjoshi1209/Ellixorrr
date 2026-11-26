@@ -25,7 +25,7 @@ export function FeedbackBanner({ dict, error, success }: FeedbackBannerProps) {
       {errorMessage ? (
         <div
           role="alert"
-          className="mb-6 p-4 rounded border border-crimson/20 bg-crimson/10 text-sm text-crimson/70"
+          className="mb-6 p-4 rounded border border-crimson/30 bg-crimson/10 text-sm text-crimson-bright"
         >
           {errorMessage}
         </div>
@@ -33,7 +33,7 @@ export function FeedbackBanner({ dict, error, success }: FeedbackBannerProps) {
       {successMessage ? (
         <div
           role="status"
-          className="mb-6 p-4 rounded border border-bone/10 bg-bone/5 text-sm text-bone/70"
+          className="mb-6 p-4 rounded border border-rule bg-bone/[0.04] text-sm text-muted"
         >
           {successMessage}
         </div>

@@ -6,7 +6,7 @@ type ProcessProps = {
   dict: Dictionary;
 };
 
-/** Five-step working process as a numbered editorial timeline. */
+/** Five-step working process as a numbered editorial ledger. */
 export function Process({ dict }: ProcessProps) {
   return (
     <SectionShell id="process" index="04" aria-label={dict.process.eyebrow}>
@@ -18,11 +18,11 @@ export function Process({ dict }: ProcessProps) {
           </Reveal>
         </div>
 
-        <ol className="md:col-span-8">
+        <ol className="border-b border-rule md:col-span-8">
           {dict.process.steps.map((step, index) => (
             <li key={step.title}>
               <Reveal delay={0.05 * index} y={16}>
-                <div className="flex gap-6 border-t border-bone/10 py-8 last:border-b md:gap-10 md:py-10">
+                <div className="flex gap-6 border-t border-rule py-8 md:gap-10 md:py-10">
                   <span
                     aria-hidden="true"
                     className="ghost-numeral shrink-0 text-[clamp(2.5rem,5vw,4.5rem)]"
@@ -31,7 +31,7 @@ export function Process({ dict }: ProcessProps) {
                   </span>
                   <div>
                     <h3 className="display-md">{step.title}</h3>
-                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-bone/70">
+                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted">
                       {step.description}
                     </p>
                   </div>

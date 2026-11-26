@@ -17,6 +17,9 @@ import {
   resolveLocale,
   safeRedirectPath,
   getAppOrigin,
+  isAdminPath,
+  isCustomerPath,
+  stripLocalePrefix,
 } from "@/lib/navigation";
 import { getCurrentProfile } from "@/lib/profiles";
 import {
@@ -60,6 +63,20 @@ function validationErrorCode(
   return mismatch ? mismatchCode : "validation_failed";
 }
 
+/**
+ * Builds the login failure redirect while preserving only the identifier the
+ * visitor typed. The password is never carried back into the URL.
+ */
+function loginFailurePath(locale: Locale, email: string): string {
+  const base = feedbackPath(locale, "/auth/login", {
+    error: "invalid_credentials",
+  });
+  const identifier = email.trim().slice(0, 254);
+  if (!identifier) return base;
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}${new URLSearchParams({ email: identifier }).toString()}`;
+}
+
 /** ------------------------------------------------------------------------
  *  Authentication server actions
  * ----------------------------------------------------------------------- */
@@ -72,9 +89,7 @@ export async function loginAction(formData: FormData) {
 
   const validated = loginSchema.safeParse({ email, password });
   if (!validated.success) {
-    redirect(
-      feedbackPath(locale, "/auth/login", { error: "invalid_credentials" })
-    );
+    redirect(loginFailurePath(locale, email));
   }
 
   const supabase = await createServerClient();
@@ -87,18 +102,28 @@ export async function loginAction(formData: FormData) {
   if (error) {
     // The raw Supabase message is never echoed back: it can reveal whether
     // an account exists for a given address.
-    redirect(
-      feedbackPath(locale, "/auth/login", { error: "invalid_credentials" })
-    );
+    redirect(loginFailurePath(locale, email));
   }
 
-  // Honour the (validated) destination the visitor came from.
-  const safeTarget = safeRedirectPath(redirectTo);
-  if (safeTarget) redirect(safeTarget);
-
-  // Otherwise route by role.
+  // Route by role first: an admin must never be redirected into the customer
+  // portal, where `requireCustomer()` would immediately bounce them again.
   const profile = await getCurrentProfile();
-  if (profile?.role === "admin") {
+  const isAdmin = profile?.role === "admin";
+
+  // Honour the validated destination when it is appropriate for that role.
+  const safeTarget = safeRedirectPath(redirectTo);
+  const targetBarePath = safeTarget ? stripLocalePrefix(safeTarget) : null;
+  const roleMismatch =
+    (isAdmin &&
+      targetBarePath !== null &&
+      isCustomerPath(targetBarePath)) ||
+    (!isAdmin && targetBarePath !== null && isAdminPath(targetBarePath));
+
+  if (safeTarget && !roleMismatch) {
+    redirect(safeTarget);
+  }
+
+  if (isAdmin) {
     redirect(localizedPath(locale, "/admin"));
   }
   redirect(localizedPath(locale, "/dashboard"));
@@ -303,11 +328,13 @@ export async function updateProfileAction(formData: FormData) {
   }
 
   // `role` is intentionally absent: a customer can never promote themselves.
+  // The email comes from the verified Supabase Auth user, so editing the
+  // profile cannot desynchronise the login address from the profile row.
   const { error } = await supabase
     .from("profiles")
     .update({
       full_name: validated.data.full_name || null,
-      email: validated.data.email || null,
+      email: user.email ?? null,
       phone: validated.data.phone || null,
     })
     .eq("id", user.id);

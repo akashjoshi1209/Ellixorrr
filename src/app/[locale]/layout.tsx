@@ -13,6 +13,13 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import { absoluteRootUrl, absoluteUrl } from "@/lib/site-config";
 import { buildGraph } from "@/lib/structured-data";
 
+/** Locale identifiers use the regional form expected by Open Graph. */
+const OG_LOCALES: Record<Locale, string> = {
+  en: "en_IN",
+  hi: "hi_IN",
+  mr: "mr_IN",
+};
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
@@ -27,12 +34,14 @@ export async function generateMetadata({
   const dict = getDictionary(locale);
 
   const siteUrl = absoluteUrl(locale, "/");
+  const ogLocale = OG_LOCALES[locale];
 
   // All routes under [locale] default to noindex. The homepage overrides
   // this in its own metadata export; auth, dashboard, and admin routes
   // intentionally remain noindex because they contain no public content
   // and are protected by server-side authorization.
   return {
+    metadataBase: new URL(absoluteRootUrl("/")),
     title: dict.meta.title,
     description: dict.meta.description,
     alternates: {
@@ -41,6 +50,7 @@ export async function generateMetadata({
         en: absoluteUrl("en", "/"),
         hi: absoluteUrl("hi", "/"),
         mr: absoluteUrl("mr", "/"),
+        "x-default": absoluteUrl("en", "/"),
       },
     },
     openGraph: {
@@ -49,13 +59,16 @@ export async function generateMetadata({
       title: dict.meta.title,
       description: dict.meta.description,
       url: siteUrl,
-      locale,
+      locale: ogLocale,
+      alternateLocale: locales
+        .filter((alternate) => alternate !== locale)
+        .map((alternate) => OG_LOCALES[alternate]),
       images: [
         {
           url: absoluteRootUrl("/og-image.svg"),
           width: 1200,
           height: 630,
-          alt: "ELLIXORRR — Websites, Applications, Automations, Custom Solutions",
+          alt: dict.meta.ogImageAlt,
         },
       ],
     },
@@ -63,7 +76,14 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: dict.meta.title,
       description: dict.meta.description,
-      images: [absoluteRootUrl("/og-image.svg")],
+      images: [
+        {
+          url: absoluteRootUrl("/og-image.svg"),
+          width: 1200,
+          height: 630,
+          alt: dict.meta.ogImageAlt,
+        },
+      ],
     },
     robots: { index: false, follow: true },
   };
@@ -106,14 +126,16 @@ export default async function LocaleLayout({
           />
         ))}
         <a
-          href="#home"
+          href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-bone focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-charcoal"
         >
-          {dict.nav.home}
+          {dict.nav.skipToContent}
         </a>
         <MotionProvider>
           <SiteHeader locale={locale as Locale} dict={dict} />
-          <main className="flex-1">{children}</main>
+          <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
+            {children}
+          </main>
         </MotionProvider>
         <SiteFooter locale={locale as Locale} dict={dict} />
         <div className="noise-overlay" aria-hidden="true" />

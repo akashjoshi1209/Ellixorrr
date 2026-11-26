@@ -217,6 +217,15 @@ Next.js build: exit 0, 42 pages generated, `ƒ Proxy (Middleware)` present.
 
 ## Remaining security risks and limitations
 
+> **2026-11-25 Phase 4 correction:** The reset target cited in item 2 and in the
+> user-actions table below is stale. The current `forgotPasswordAction` calls
+> `resetPasswordForEmail` with
+> `redirectTo: ${getAppOrigin()}/${locale}/auth/reset-password`.
+> `getAppOrigin()` prefers `NEXT_PUBLIC_APP_URL` and falls back to the request
+> origin; it never falls back to Supabase. The live Supabase Redirect URL
+> allowlist still requires external verification. See
+> `reports/phase-4/AUTH_EMAIL_READINESS.md`.
+
 1. **Migration 003 never executed against PostgreSQL.** No local `psql`/Postgres and Docker daemon not running. Validated only by dollar-quote/string/parenthesis balance checks. Live DB-dependent items unverified:
    - Whether `profiles` admin SELECT/UPDATE policies trigger "infinite recursion detected in policy for relation profiles" (would block admins until 003 is applied).
    - `enquiries.created_at` default is `now()`; `relforcerowsecurity = false`; extra INSERT policies; `anon`/`authenticated` table grants; `auth.users` column list for test A15.

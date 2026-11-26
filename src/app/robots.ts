@@ -5,22 +5,30 @@
  *
  * Allows all crawlers (including AI training and AI search crawlers) to
  * access public website content. Declares the sitemap location and
- * discourages crawling of private application routes (/auth, /dashboard,
- * /admin). robots.txt is not an access-control mechanism; those routes are
- * protected by server-side authorization independent of this file.
+ * discourages crawling of private application routes in both their bare and
+ * locale-prefixed forms. robots.txt is not an access-control mechanism; those
+ * routes are protected by server-side authorization independent of this file.
  */
 import { MetadataRoute } from "next";
+import { locales } from "@/i18n/config";
 import { absoluteRootUrl } from "@/lib/site-config";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const sitemapUrl = absoluteRootUrl("/sitemap.xml");
+  const privatePaths = ["auth", "dashboard", "admin"];
+  const disallow = [
+    ...privatePaths.map((path) => `/${path}/`),
+    ...locales.flatMap((locale) =>
+      privatePaths.map((path) => `/${locale}/${path}/`)
+    ),
+  ];
 
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/auth/", "/dashboard/", "/admin/"],
+        disallow,
       },
     ],
     sitemap: sitemapUrl,

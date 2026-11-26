@@ -109,11 +109,12 @@ export function ResetPasswordSession({
 
   if (invalid) {
     return (
-      <div className="mb-6 p-4 rounded border border-crimson/20 bg-crimson/10 text-sm text-crimson/70">
+      <div className="mb-6 rounded border border-crimson/30 bg-crimson/10 p-4 text-sm text-crimson-bright">
         <p>{invalidMessage}</p>
         <Link
           href={`/${locale}/auth/forgot-password`}
-          className="mt-2 inline-block font-semibold text-bone underline transition-colors hover:text-crimson-bright"
+          prefetch={false}
+          className="mt-2 inline-block font-semibold text-bone underline transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
         >
           {requestNewLinkLabel}
         </Link>
@@ -122,7 +123,10 @@ export function ResetPasswordSession({
   }
 
   return (
-    <p className="mb-6 p-4 rounded border border-bone/10 bg-charcoal/40 text-sm text-bone/60">
+    <p
+      role="status"
+      className="mb-6 rounded border border-rule bg-forest/40 p-4 text-sm text-muted"
+    >
       {verifyingMessage}
     </p>
   );

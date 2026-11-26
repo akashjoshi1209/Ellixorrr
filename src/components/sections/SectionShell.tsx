@@ -12,8 +12,9 @@ type SectionShellProps = {
 
 /**
  * Consistent section container: rhythm, hairline transitions and the
- * charcoal/forest layered-surface system. The optional ghost label is purely
- * decorative and hidden from assistive technology.
+ * charcoal/forest layered-surface system. The oversized index numeral is
+ * decorative and kept on the left edge so it cannot cause right-side
+ * horizontal overflow at tablet widths.
  */
 export function SectionShell({
   id,
@@ -23,7 +24,8 @@ export function SectionShell({
   children,
   "aria-label": ariaLabel,
 }: SectionShellProps) {
-  const background = surface === "forest" ? "bg-forest border-y border-bone/[0.06]" : "bg-charcoal";
+  const background =
+    surface === "forest" ? "bg-forest border-y border-rule" : "bg-charcoal";
 
   return (
     <section
@@ -34,12 +36,14 @@ export function SectionShell({
       {index ? (
         <span
           aria-hidden="true"
-          className="ghost-numeral pointer-events-none absolute -top-6 right-4 hidden text-[clamp(6rem,14vw,13rem)] md:block"
+          className="ghost-numeral pointer-events-none absolute left-4 top-8 hidden text-[clamp(6rem,11vw,11rem)] opacity-70 md:block lg:left-16"
         >
           {index}
         </span>
       ) : null}
-      <div className="relative mx-auto max-w-7xl px-gutter py-24 md:py-32">{children}</div>
+      <div className="relative mx-auto max-w-7xl px-gutter py-24 md:py-32">
+        {children}
+      </div>
     </section>
   );
 }

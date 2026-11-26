@@ -37,6 +37,7 @@ export const ERROR_CODES = [
   "project_update_failed",
   "project_delete_failed",
   "enquiry_status_update_failed",
+  "project_update_create_failed",
   "rate_limited",
 ] as const;
 
@@ -53,6 +54,7 @@ export const SUCCESS_CODES = [
   "project_updated",
   "project_deleted",
   "enquiry_status_updated",
+  "project_update_created",
 ] as const;
 
 export type SuccessCode = (typeof SUCCESS_CODES)[number];

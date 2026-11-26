@@ -36,22 +36,33 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 - `SUPABASE_SERVICE_ROLE_KEY` is **server-only** and must never be exposed to
   the browser or committed to Git.
 
-## 3. Apply the database migration
+## 3. Apply the database migrations
 
-Open the Supabase Dashboard → **SQL Editor** and paste the contents of:
+Apply migration files in filename order:
 
-```
-supabase/migrations/001_initial_schema.sql
-```
+1. `supabase/migrations/001_initial_schema.sql` — creates tables, indexes,
+   triggers, and the initial Row Level Security policies.
+2. `supabase/migrations/002_security_hardening.sql` — historical hardening pass
+   that pinned `search_path` on trigger functions.
+3. `supabase/migrations/003_security_hardening.sql` — current, self-contained
+   hardening pass. It supersedes `002`, is idempotent, and is safe whether or
+   not `002` ran. It closes profile-INSERT escalation, restricts public enquiry
+   inserts, replaces recursive profile policies with `public.is_admin()`, and
+   pins `search_path` on all trigger functions.
 
-Click **Run** to create all tables, indexes, triggers, and Row Level Security
-policies.
+Open the Supabase Dashboard → **SQL Editor** and paste each file in order, then
+click **Run**. Apply `003` in full as one transaction; do not apply fragments
+manually. The migration must be run by the owner of the `public` schema tables
+(in a stock Supabase project, `postgres`).
 
 Alternatively, use the Supabase CLI:
 
 ```bash
 supabase db push
 ```
+
+Migration execution against a live project is an external step; this repository
+does not claim that any migration has been applied.
 
 ## 4. Verify the schema
 
@@ -80,6 +91,13 @@ After running the migration, confirm the following exist in your Supabase projec
   when a new user signs up via Supabase Auth.
 - All reads/writes are enforced at the database level by RLS, not merely by UI
   hiding.
+
+> **2026-11-25 Phase 4 note:** These controls describe the intended post-003
+> state. `003_security_hardening.sql` also closes profile INSERT
+> self-promotion, constrains public enquiry INSERT, replaces recursive admin
+> profile policies, and pins function `search_path`. Migration 003 was not
+> applied by this handoff; an authorized operator must verify the live state.
+> See `reports/phase-4/SUPABASE_READINESS.md`.
 
 ## 5. What is NOT configured yet
 

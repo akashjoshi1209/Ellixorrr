@@ -14,6 +14,7 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabasePublicEnv } from "./env";
 import type { Database } from "./types";
 
 export type ProxySupabaseClient = {
@@ -26,10 +27,11 @@ export function createProxySupabaseClient(
   request: NextRequest
 ): ProxySupabaseClient {
   let response = NextResponse.next({ request });
+  const { url, publishableKey } = getSupabasePublicEnv();
 
   const client = createSupabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    url,
+    publishableKey,
     {
       cookies: {
         getAll() {

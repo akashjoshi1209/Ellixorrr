@@ -54,6 +54,8 @@ No invented clients, testimonials, awards, or statistics.
 
 This is a balanced approach per requirements: "Do not blindly allow every AI crawler. Do not block all AI crawlers either." robots.txt is advisory only — authorization is enforced server-side independent of this file.
 
+> Historical correction (2026-11-25): the crawler groups in this section describe an earlier implementation that is no longer active. `src/app/robots.ts` now has one default `*` group that allows all crawlers and disallows only private application routes, including locale-prefixed paths. No new AI-crawler-blocking policy was introduced during Phase 3; adopting one would require an explicit business decision.
+
 ## AEO: Content Clarity
 
 The existing website content was reviewed for answer engine suitability:

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
 import { adminListEnquiries } from "@/lib/admin-data";
 import { adminUpdateEnquiryStatus } from "@/actions/admin";
@@ -7,6 +6,12 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
 import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { PortalChrome, PortalError } from "@/components/portals/PortalChrome";
+import {
+  ENQUIRY_STATUSES,
+  portalLabels,
+} from "@/lib/portal-labels";
+import type { Dictionary } from "@/i18n/types";
 
 export const dynamic = "force-dynamic";
 
@@ -22,37 +27,61 @@ type EnquiryRow = {
   created_at: string;
 };
 
+function statusLabel(dict: Dictionary, status: string): string {
+  switch (status) {
+    case "new":
+      return dict.auth.statusNew;
+    case "reviewing":
+      return dict.auth.reviewing;
+    case "contacted":
+      return dict.auth.contacted;
+    case "converted":
+      return dict.auth.converted;
+    case "closed":
+      return dict.auth.closed;
+    default:
+      return dict.auth.unknown;
+  }
+}
+
 function EnquiryStatusForm({
   enquiry,
   locale,
+  dict,
 }: {
   enquiry: EnquiryRow;
-  locale: string;
+  locale: Locale;
+  dict: Dictionary;
 }) {
+  const selectId = `enquiry-status-${enquiry.id}`;
   return (
     <form
       action={adminUpdateEnquiryStatus}
       className="flex gap-1 justify-end"
-      noValidate
     >
       <input type="hidden" name="locale" value={locale} />
+      <label htmlFor={selectId} className="sr-only">
+        {dict.auth.updateStatus}: {enquiry.name}
+      </label>
       <select
+        id={selectId}
         name="status"
         defaultValue={enquiry.status}
-        aria-label="Enquiry status"
-        className="rounded border px-2 py-1 text-xs focus-visible:border-crimson focus-visible:outline-none transition-colors border-bone/20 bg-charcoal"
+        className="rounded border px-2 py-1 text-xs focus-visible:border-crimson focus-visible:outline-none transition-colors border-rule-strong bg-charcoal"
       >
-        <option value="new">New</option>
-        <option value="reviewing">Reviewing</option>
-        <option value="contacted">Contacted</option>
-        <option value="converted">Converted</option>
-        <option value="closed">Closed</option>
+        {ENQUIRY_STATUSES.map((status) => (
+          <option key={status} value={status}>
+            {statusLabel(dict, status)}
+          </option>
+        ))}
       </select>
       <input name="enquiry_id" type="hidden" value={enquiry.id} />
       <SubmitButton
-        className="px-2 py-1 text-xs font-semibold text-crimson transition-colors hover:text-crimson-bright"
+        pendingLabel={dict.auth.sending}
+        ariaLabel={`${dict.auth.save}: ${enquiry.name}`}
+        className="w-auto px-2 py-1 text-xs font-semibold text-crimson-bright transition-colors hover:text-crimson-bright"
       >
-        Save
+        {dict.auth.save}
       </SubmitButton>
     </form>
   );
@@ -85,115 +114,157 @@ export default async function AdminEnquiriesPage({
 
   const result = await adminListEnquiries();
   const enquiries = result.data;
+  const current = `/${locale}/admin/enquiries`;
+  const portalNav = [
+    { href: `/${locale}/admin`, label: dict.nav.dashboard },
+    { href: `/${locale}/admin/customers`, label: dict.nav.customers },
+    { href: `/${locale}/admin/projects`, label: dict.nav.adminProjects },
+    { href: current, label: dict.auth.enquiries },
+  ];
 
   return (
-    <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
-      <div className="relative mx-auto max-w-7xl px-gutter">
-        <Reveal>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="h-2 w-2 rounded-full bg-forest" aria-hidden="true" />
-                <h2 className="display-lg">Enquiries</h2>
-              </div>
-              <p className="text-sm leading-relaxed text-bone/70">
-                Review and respond to new enquiries.
-              </p>
-            </div>
-            <Link
-              href={`/${locale}/admin`}
-              className="inline-flex items-center gap-2 rounded-full bg-bone px-5 py-2.5 text-sm font-semibold text-charcoal transition-colors hover:bg-crimson hover:text-bone"
-            >
-              Back to admin
-              <span className="h-4 w-4" aria-hidden="true" />
-            </Link>
+    <PortalChrome
+      eyebrow={dict.auth.enquiries}
+      title={dict.auth.enquiries}
+      description={dict.auth.manageEnquiriesDescription}
+      navLabel={dict.nav.account}
+      nav={portalNav}
+      current={current}
+    >
+      <div>
+        {result.failed ? (
+          <div className="mb-10">
+            <PortalError
+              heading={dict.auth.loadFailedTitle}
+              message={dict.auth.loadError}
+            />
           </div>
-        </Reveal>
+        ) : null}
 
         <FeedbackBanner dict={dict} error={error} success={message} />
 
-        <Reveal delay={0.1}>
-          <div className="overflow-x-auto">
+        {!result.failed ? (
+          <Reveal delay={0.1}>
+            <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-bone/10">
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Name
+                <tr className="border-b border-rule">
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.name}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Email
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.details}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Service
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.service}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Status
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.status}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Received
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.received}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50 text-right">
-                    Action
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted text-right"
+                  >
+                    {dict.auth.action}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {enquiries.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-bone/40">
-                      No enquiries found.
+                    <td colSpan={6} className="py-8 text-center text-muted">
+                      {dict.auth.noEnquiriesFound}
                     </td>
                   </tr>
                 ) : (
                   enquiries.map((enquiry: EnquiryRow) => (
                     <tr
                       key={enquiry.id}
-                      className="border-b border-bone/10 hover:bg-charcoal/20 transition-colors"
+                      className="border-b border-rule hover:bg-charcoal/20 transition-colors align-top"
                     >
                       <td className="py-4">
-                        <div className="font-medium text-bone">
-                          {enquiry.name}
-                        </div>
-                        <div className="text-xs text-bone/40 mt-1">
-                          {enquiry.business_name || "—"}
+                        <div className="font-medium text-bone">{enquiry.name}</div>
+                        <div className="text-xs text-muted mt-1">
+                          {enquiry.email}
                         </div>
                       </td>
-                      <td className="py-4 text-bone/70">{enquiry.email}</td>
-                      <td className="py-4 text-bone/60">{enquiry.service_type}</td>
+                      <td className="py-4 text-xs text-muted max-w-md">
+                        <p>
+                          <span className="font-semibold text-bone/80">
+                            {dict.auth.businessName}:
+                          </span>{" "}
+                          {enquiry.business_name || dict.auth.notProvided}
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-semibold text-bone/80">
+                            {dict.auth.phone}:
+                          </span>{" "}
+                          {enquiry.phone || dict.auth.notProvided}
+                        </p>
+                        <p className="mt-1 whitespace-pre-line">
+                          <span className="font-semibold text-bone/80">
+                            {dict.auth.projectDescription}:
+                          </span>{" "}
+                          {enquiry.project_description}
+                        </p>
+                      </td>
+                      <td className="py-4 text-muted">
+                        {portalLabels.service(dict.auth, enquiry.service_type)}
+                      </td>
                       <td className="py-4">
                         <span
-                          className={`px-2 py-0.5 rounded text-[0.65rem] font-semibold tracking-wider ${
+                          className={`px-2 py-0.5 rounded text-xs font-semibold tracking-wider ${
                             enquiry.status === "new"
-                              ? "text-crimson/60 bg-crimson/10 border border-crimson/20"
+                              ? "text-crimson-bright bg-crimson/10 border border-crimson/30"
                               : enquiry.status === "reviewing"
-                                ? "text-bone bg-bone/10 border border-bone/20"
+                                ? "text-bone bg-bone/10 border border-rule-strong"
                                 : enquiry.status === "contacted"
                                   ? "text-forest bg-forest/10 border border-forest/20"
                                   : enquiry.status === "converted"
-                                    ? "text-crimson/60 bg-crimson/10 border border-crimson/20"
-                                    : "text-bone bg-bone/10 border border-bone/20"
+                                    ? "text-crimson-bright bg-crimson/10 border border-crimson/30"
+                                    : "text-bone bg-bone/10 border border-rule-strong"
                           }`}
                         >
-                          {enquiry.status}
+                          {portalLabels.enquiryStatus(dict.auth, enquiry.status)}
                         </span>
                       </td>
-                      <td className="py-4 text-bone/40 text-xs">
-                        {new Date(enquiry.created_at).toLocaleDateString(
-                          undefined,
-                          { month: "short", day: "numeric", year: "numeric" }
-                        )}
+                      <td className="py-4 text-muted text-xs">
+                        {portalLabels.date(enquiry.created_at, resolvedLocale)}
                       </td>
                       <td className="py-4 text-right">
-                        <EnquiryStatusForm enquiry={enquiry} locale={locale} />
+                        <EnquiryStatusForm
+                          enquiry={enquiry}
+                          locale={resolvedLocale}
+                          dict={dict}
+                        />
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-          </div>
-        </Reveal>
+            </div>
+          </Reveal>
+        ) : null}
       </div>
-    </section>
+    </PortalChrome>
   );
 }

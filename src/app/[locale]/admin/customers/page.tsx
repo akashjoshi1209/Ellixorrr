@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
 import { adminListCustomers } from "@/lib/admin-data";
 import { requireAdmin } from "@/lib/profiles";
+import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, type Locale } from "@/i18n/config";
+import { PortalChrome, PortalError } from "@/components/portals/PortalChrome";
+import { portalLabels } from "@/lib/portal-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -14,107 +16,116 @@ export default async function AdminCustomersPage({
   const { locale } = await params;
   if (!isLocale(locale)) return null;
   const resolvedLocale = locale as Locale;
+  const dict = getDictionary(resolvedLocale);
 
   // Server-side authorization: only admins may access admin routes.
   await requireAdmin(resolvedLocale);
 
   const result = await adminListCustomers();
   const customers = result.data;
+  const current = `/${locale}/admin/customers`;
+  const portalNav = [
+    { href: `/${locale}/admin`, label: dict.nav.dashboard },
+    { href: current, label: dict.nav.customers },
+    { href: `/${locale}/admin/projects`, label: dict.nav.adminProjects },
+    { href: `/${locale}/admin/enquiries`, label: dict.auth.enquiries },
+  ];
 
   return (
-    <section className="relative overflow-hidden border-t border-bone/[0.06] bg-charcoal py-28 md:py-40">
-      <div className="relative mx-auto max-w-7xl px-gutter">
-        <Reveal>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="h-2 w-2 rounded-full bg-forest" aria-hidden="true" />
-                <h2 className="display-lg">Customer management</h2>
-              </div>
-              <p className="text-sm leading-relaxed text-bone/70">
-                View and manage all customer accounts.
-              </p>
-            </div>
-            <Link
-              href={`/${locale}/admin`}
-              className="inline-flex items-center gap-2 rounded-full bg-bone px-5 py-2.5 text-sm font-semibold text-charcoal transition-colors hover:bg-crimson hover:text-bone"
-            >
-              Back to admin
-              <span className="h-4 w-4" aria-hidden="true" />
-            </Link>
+    <PortalChrome
+      eyebrow={dict.nav.customers}
+      title={dict.auth.customerManagement}
+      description={dict.auth.manageCustomersDescription}
+      navLabel={dict.nav.account}
+      nav={portalNav}
+      current={current}
+    >
+      <div>
+        {result.failed ? (
+          <div className="mb-10">
+            <PortalError
+              heading={dict.auth.loadFailedTitle}
+              message={dict.auth.loadError}
+            />
           </div>
-        </Reveal>
+        ) : null}
 
-        <Reveal delay={0.1}>
-          <div className="overflow-x-auto">
+        {!result.failed ? (
+          <Reveal delay={0.1}>
+            <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-bone/10">
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Name
+                <tr className="border-b border-rule">
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.name}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Email
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.email}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Role
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.role}
                   </th>
-                  <th className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-bone/50">
-                    Joined
+                  <th
+                    scope="col"
+                    className="pb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted"
+                  >
+                    {dict.auth.joined}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {customers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-bone/40">
-                      No customers found.
+                    <td colSpan={4} className="py-8 text-center text-muted">
+                      {dict.auth.noCustomersFound}
                     </td>
                   </tr>
                 ) : (
                   customers.map((customer) => (
                     <tr
                       key={customer.id}
-                      className="border-b border-bone/10 hover:bg-charcoal/20 transition-colors"
+                      className="border-b border-rule hover:bg-charcoal/20 transition-colors"
                     >
                       <td className="py-4">
                         <div className="font-medium text-bone">
-                          {customer.full_name || "Unnamed"}
+                          {customer.full_name || dict.auth.unnamed}
                         </div>
                       </td>
-                      <td className="py-4 text-bone/70">
-                        {customer.email ?? "—"}
+                      <td className="py-4 text-muted">
+                        {customer.email ?? dict.auth.notProvided}
                       </td>
                       <td className="py-4">
                         <span
-                          className={`px-2 py-0.5 rounded text-[0.65rem] font-semibold tracking-wider ${
+                          className={`px-2 py-0.5 rounded text-xs font-semibold tracking-wider ${
                             customer.role === "admin"
-                              ? "text-crimson/60 bg-crimson/10 border border-crimson/20"
+                              ? "text-crimson-bright bg-crimson/10 border border-crimson/30"
                               : "text-forest bg-forest/10 border border-forest/20"
                           }`}
                         >
-                          {customer.role}
+                          {portalLabels.role(dict.auth, customer.role)}
                         </span>
                       </td>
-                      <td className="py-4 text-bone/40 text-xs">
-                        {new Date(customer.created_at).toLocaleDateString(
-                          undefined,
-                          { month: "short", day: "numeric", year: "numeric" }
-                        )}
+                      <td className="py-4 text-muted text-xs">
+                        {portalLabels.date(customer.created_at, resolvedLocale)}
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-          </div>
-          {customers.length === 0 && (
-            <div className="py-8 text-center text-bone/60">
-              No customers found.
             </div>
-          )}
-        </Reveal>
+          </Reveal>
+        ) : null}
       </div>
-    </section>
+    </PortalChrome>
   );
 }

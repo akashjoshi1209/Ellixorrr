@@ -1,10 +1,11 @@
-import Link from "next/link";
 import { LogoMark } from "@/components/brand/Logo";
+import { LocaleLink } from "@/components/nav/LanguageSwitcher";
 import { Mail, Phone, Smartphone } from "lucide-react";
 import { COPYRIGHT_YEAR } from "@/config";
 import { locales, localeNames } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/types";
 import type { Locale } from "@/i18n/config";
+import { CONTACT, mailtoUrl, whatsappUrl } from "@/lib/site-config";
 
 type SiteFooterProps = {
   locale: Locale;
@@ -21,31 +22,32 @@ const navTargets = [
 
 export function SiteFooter({ locale, dict }: SiteFooterProps) {
   return (
-    <footer className="border-t border-bone/10 bg-forest">
-      <div className="mx-auto max-w-7xl px-gutter py-16">
-        <div className="grid gap-12 md:grid-cols-12">
+    <footer className="relative overflow-hidden border-t border-rule bg-forest">
+      <div aria-hidden="true" className="grid-texture absolute inset-0 opacity-60" />
+      <div className="relative mx-auto max-w-7xl px-gutter py-16">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-12">
           {/* Brand */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-2 lg:col-span-5">
             <div className="flex items-center gap-3">
               <LogoMark className="h-7 w-auto" />
               <span className="font-display text-lg font-semibold tracking-[0.18em] text-bone">
                 ELLIXORRR
               </span>
             </div>
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-bone/60">
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted">
               {dict.footer.tagline}
             </p>
           </div>
 
           {/* Navigation */}
-          <nav className="md:col-span-3" aria-label={dict.footer.navTitle}>
+          <nav className="md:col-span-1 lg:col-span-3" aria-label={dict.footer.navTitle}>
             <h2 className="eyebrow">{dict.footer.navTitle}</h2>
             <ul className="mt-5 space-y-3">
               {navTargets.map(({ id, key }) => (
                 <li key={id}>
                   <a
-                    href={`#${id}`}
-                    className="text-sm text-bone/70 transition-colors hover:text-bone focus-visible:text-bone"
+                    href={`/${locale}#${id}`}
+                    className="text-sm text-bone transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
                   >
                     {dict.nav[key]}
                   </a>
@@ -55,21 +57,20 @@ export function SiteFooter({ locale, dict }: SiteFooterProps) {
           </nav>
 
           {/* Language */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1 lg:col-span-2">
             <h2 className="eyebrow">{dict.footer.langTitle}</h2>
             <ul className="mt-5 space-y-3">
               {locales.map((l) => (
                 <li key={l}>
-                  <Link
-                    href={`/${l}`}
-                    hrefLang={l}
-                    aria-current={l === locale ? "true" : undefined}
+                  <LocaleLink
+                    locale={l}
+                    current={l === locale}
                     className={`text-sm transition-colors hover:text-bone focus-visible:text-bone ${
-                      l === locale ? "font-semibold text-bone" : "text-bone/70"
+                      l === locale ? "font-semibold text-bone" : "text-muted"
                     }`}
                   >
                     {localeNames[l]}
-                  </Link>
+                  </LocaleLink>
                 </li>
               ))}
             </ul>
@@ -81,32 +82,30 @@ export function SiteFooter({ locale, dict }: SiteFooterProps) {
             <ul className="mt-5 space-y-3">
               <li>
                 <a
-                  href={`https://wa.me/919404044607?text=${encodeURIComponent(
-                    "Hello Ellixorrr, I'm interested in discussing a digital solution for my business. I'd like to share my requirements."
-                  )}`}
+                  href={whatsappUrl(dict.contact.whatsapp.message)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-bone/70 transition-colors hover:text-bone focus-visible:text-bone"
+                  className="flex items-center gap-2 text-sm text-bone transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
                 >
-                  <Smartphone className="h-4 w-4 shrink-0 text-crimson" aria-hidden="true" />
+                  <Smartphone className="h-4 w-4 shrink-0 text-crimson-bright" aria-hidden="true" />
                   <span>{dict.contact.whatsapp.label}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href={`mailto:ellixorrr@gmail.com?subject=${encodeURIComponent("Project Enquiry — Ellixorrr")}`}
-                  className="flex items-center gap-2 text-sm text-bone/70 transition-colors hover:text-bone focus-visible:text-bone"
+                  href={mailtoUrl(dict.contact.email.subject)}
+                  className="flex items-center gap-2 text-sm text-bone transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
                 >
-                  <Mail className="h-4 w-4 shrink-0 text-crimson" aria-hidden="true" />
+                  <Mail className="h-4 w-4 shrink-0 text-crimson-bright" aria-hidden="true" />
                   <span>{dict.contact.email.address}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href="tel:+919404044607"
-                  className="flex items-center gap-2 text-sm text-bone/70 transition-colors hover:text-bone focus-visible:text-bone"
+                  href={`tel:${CONTACT.phoneDial}`}
+                  className="flex items-center gap-2 text-sm text-bone transition-colors hover:text-crimson-bright focus-visible:text-crimson-bright"
                 >
-                  <Phone className="h-4 w-4 shrink-0 text-crimson" aria-hidden="true" />
+                  <Phone className="h-4 w-4 shrink-0 text-crimson-bright" aria-hidden="true" />
                   <span>{dict.contact.phone.number}</span>
                 </a>
               </li>
@@ -114,11 +113,11 @@ export function SiteFooter({ locale, dict }: SiteFooterProps) {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-bone/10 pt-6 text-xs text-bone/55 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-3 border-t border-rule pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {COPYRIGHT_YEAR} ELLIXORRR. {dict.footer.rights}
           </p>
-          <p className="font-display tracking-[0.28em] text-bone/55">ELLIXORRR</p>
+          <p className="font-display tracking-[0.28em] text-muted">ELLIXORRR</p>
         </div>
       </div>
     </footer>

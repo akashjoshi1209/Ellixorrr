@@ -24,14 +24,16 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { getSupabasePublicEnv } from "./env";
 import type { Database } from "./types";
 
 export async function createServerClient(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies();
+  const { url, publishableKey } = getSupabasePublicEnv();
 
   return createSupabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    url,
+    publishableKey,
     {
       cookies: {
         getAll() {

@@ -17,6 +17,28 @@ import { type Locale } from "@/i18n/config";
 const FALLBACK_SITE_URL = "https://ellixorrr.dpdns.org";
 
 /**
+ * Real contact channels used by public pages, structured data, and tests.
+ * Localized dictionaries own the visible labels and message copy; the
+ * destinations themselves live here so they cannot drift between surfaces.
+ */
+export const CONTACT = {
+  email: "ellixorrr@gmail.com",
+  phoneDisplay: "+91 94040 44607",
+  phoneDial: "+919404044607",
+  whatsappNumber: "919404044607",
+} as const;
+
+/** Builds the WhatsApp deep link for a localized message. */
+export function whatsappUrl(message: string): string {
+  return `https://wa.me/${CONTACT.whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+/** Builds the email deep link for a localized subject. */
+export function mailtoUrl(subject: string): string {
+  return `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}`;
+}
+
+/**
  * Reads and normalizes the configured site URL.
  *
  * Resolution order:
