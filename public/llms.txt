@@ -1,6 +1,6 @@
 # ELLIXORRR
 
-Ellixorrr is a technology services company helping businesses build and manage their digital presence through tailored websites, applications, business automation, and custom technology solutions. We work around each business's actual requirements and provide ongoing support and improvements after launch.
+Ellixorrr is a technology services company helping businesses build and manage their digital presence through website development, application development, business automation, and custom solutions. We work around each business's actual requirements and provide ongoing support and improvements after launch.
 
 ## Services
 
@@ -28,7 +28,7 @@ Ellixorrr is a technology services company helping businesses build and manage t
 
 ## About
 
-Ellixorrr deliberately limits itself to four things it does exceptionally well: websites, applications, automations, and custom solutions. The agency works with businesses of every type — from local shops to growing companies — and takes responsibility for what it ships: development, maintenance, and improvement.
+Ellixorrr deliberately limits itself to four things it does exceptionally well: website development, application development, business automation, and custom solutions. The company works with businesses of every type — from local shops to growing companies — and takes responsibility for what it ships: development, maintenance, and improvement.
 
 ## Verification
 

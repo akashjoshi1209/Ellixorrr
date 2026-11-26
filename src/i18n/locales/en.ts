@@ -3,7 +3,7 @@ const en = {
   meta: {
     title: "Ellixorrr — Websites, Applications, Automations & Custom Solutions",
     description:
-      "Ellixorrr is a SaaS and technology agency that helps businesses earn more while keeping operations simple — websites, applications, automations and custom solutions built around your actual requirements.",
+      "Ellixorrr is a technology services company that helps businesses earn more while keeping operations simple — website development, application development, business automation and custom solutions built around your actual requirements.",
     ogImageAlt:
       "ELLIXORRR — Websites, Applications, Automations, Custom Solutions",
   },
@@ -27,7 +27,7 @@ const en = {
     languageMobile: "Mobile language",
   },
   hero: {
-    eyebrow: "SaaS & technology agency",
+    eyebrow: "Technology services company",
     titleA: "Earn more.",
     titleB: "Run simpler.",
     description:
@@ -42,7 +42,7 @@ const en = {
     eyebrow: "Who we are",
     title: "Technology should grow your business — not complicate it.",
     paragraphs: [
-      "Ellixorrr is a SaaS and technology agency helping businesses digitize their operations. We work with businesses of every type — from local shops to growing companies — and we deliberately limit ourselves to four things we do exceptionally well: websites, applications, automations and custom solutions.",
+      "Ellixorrr is a technology services company helping businesses digitize their operations. We work with businesses of every type — from local shops to growing companies — and we deliberately limit ourselves to four things we do exceptionally well: website development, application development, business automation and custom solutions.",
       "Our promise is simple: help you earn more while keeping your operations simple. We learn your business before we build, we shape every solution around your real requirements, and we take responsibility for what we ship — development, maintenance and improvement.",
     ],
   },
